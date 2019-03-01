@@ -1,11 +1,12 @@
 /*
  * Main LIBRARY file for RASCAL
- * Imports scanner
+ * Utilizes the scanner module
  */
 use std::fs;
 use std::error::Error;
 
 mod scanner;
+use scanner::Scanner;
 
 pub struct Config {
     pub filename: String,
@@ -27,7 +28,10 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>>{
     let contents = fs::read_to_string(&config.filename)?;
 
     println!("{}", contents);
-    scanner::scanfile(&config.filename);
+
+    let mut scan = Scanner::new(&config.filename);
+    scan.print_types();
+    // scanner::scanfile(&config.filename);
 
     Ok(())
 }
