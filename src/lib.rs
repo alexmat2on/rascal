@@ -31,7 +31,8 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>>{
 
     let mut scan = Scanner::new(&config.filename);
     scan.print_types();
-    // scanner::scanfile(&config.filename);
+    println!("tok: {:?}", scan.read_next_token());
+    println!("tok: {:?}", scan.read_next_token());
 
     Ok(())
 }
