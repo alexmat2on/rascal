@@ -40,7 +40,7 @@ impl Scanner {
     pub fn print_types(&self) {
         for b in &self.src_code {
             let tp = tokens::get_byte_type(*b);
-            println!("{}", tp);
+            println!("{}", *b);
         }
     }
 
@@ -54,6 +54,8 @@ impl Scanner {
     pub fn read_next_token(&mut self) -> Token {
         let mut byte = &self.src_code[self.scan_ptr];
         let first_type = tokens::get_byte_type(*byte);
+        println!("\n==================================================");
+        println!("RUNNING RNT: b - {:?}, t - {:?}", *byte, first_type);
 
         let mut token_value = vec![];
 
@@ -63,13 +65,16 @@ impl Scanner {
                 break Token::new(TokenType::Null, String::from(""));
             }
 
+            self.scan_ptr += 1;
+            let next_byte = &self.src_code[self.scan_ptr];
+
             match first_type {
                 ByteType::ALPHA => match cur_type {
                     ByteType::WHITE | ByteType::PUNCT => {
                         let token_value = String::from_utf8(token_value).expect("Invalid utf8");
                         break Token::new(TokenType::Ident, token_value);
                     },
-                    _ => {},
+                    _ => {/* do nothing yet */},
                 },
                 ByteType::DIGIT => match cur_type {
                     ByteType::WHITE | ByteType::ALPHA => {
@@ -82,18 +87,41 @@ impl Scanner {
                             break Token::new(TokenType::IntLit, token_value);
                         }
                     },
-                    _ => {},
+                    _ => {/* do nothing yet */},
                 },
-                ByteType::PUNCT => {},
-                ByteType::WHITE => {},
-                ByteType::INVLD => {},
+                ByteType::PUNCT => {
+                    match *byte {
+                        58 => {
+                            // println!("{:?} - {:?} DEBUGG", *byte, *next_byte);
+                            if *next_byte == 61 {
+                                token_value.push(*byte);
+                                token_value.push(*next_byte);
+                                self.scan_ptr += 1;
+                                let token_value = String::from_utf8(token_value).expect("Invalid utf8");
+                                break Token::new(TokenType::OpAssign, token_value);
+                            }
+                        },
+                        43 => {
+                            break Token::new(TokenType::OpPlus, String::from("+"));
+                        },
+                        59 => {
+                            break Token::new(TokenType::Semi, String::from(";"));
+                        },
+                        _ => {
+                        /* do nothing yet */
+                        // println!("{:?} DEBUGG", *byte);
+                        }
+                    }
+                },
+                ByteType::WHITE => break Token::new(TokenType::Sep, String::from(" ")),
+                ByteType::INVLD => {
+                    /* do nothing yet */
+                },
             }
-
-            println!("RNT: {}", byte);
 
             token_value.push(*byte);
 
-            self.scan_ptr += 1;
+            println!("RNT: {}", byte);
             byte = &self.src_code[self.scan_ptr];
         }
     }

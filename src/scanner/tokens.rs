@@ -18,14 +18,15 @@ impl Token {
 pub enum TokenType {
     Null,   // Only used (currently) for initializing the Scanner, might be able to remove this in the future
     Eof,
+    Sep,
 
     // Keywords
     Begin,
     End,
 
     // Operators
-    Plus,
-    Assign,
+    OpPlus,
+    OpAssign,
 
     // Constants
     IntLit,
@@ -40,6 +41,7 @@ pub enum TokenType {
 }
 
 /* Names for different character values the scanner might encounter */
+#[derive(Debug)]
 pub enum ByteType {
     INVLD,
     WHITE,

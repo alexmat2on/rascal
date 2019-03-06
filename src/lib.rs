@@ -33,6 +33,14 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>>{
     scan.print_types();
     println!("tok: {:?}", scan.read_next_token());
     println!("tok: {:?}", scan.read_next_token());
+    println!("tok: {:?}", scan.read_next_token());
+    println!("tok: {:?}", scan.read_next_token());
+    println!("tok: {:?}", scan.read_next_token());
+    println!("tok: {:?}", scan.read_next_token());
+    println!("tok: {:?}", scan.read_next_token());
+    println!("tok: {:?}", scan.read_next_token());
+    println!("tok: {:?}", scan.read_next_token());
+
 
     Ok(())
 }
