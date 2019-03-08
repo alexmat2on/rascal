@@ -1,12 +1,12 @@
 /*
- * SCANNER module
- *
- * The Scanner will read the source file into a byte vector, and perform operations on it.
- * Mainly, the Scanner will maintain an index (`scan_ptr`) to the beginning of the currently
- * active Token which will be stored in the `cur_token` field.
- *
- * It exposes a public method to get the next token in the file
- */
+* SCANNER module
+*
+* The Scanner will read the source file into a byte vector, and perform operations on it.
+* Mainly, the Scanner will maintain an index (`scan_ptr`) to the beginning of the currently
+* active Token which will be stored in the `cur_token` field.
+*
+* It exposes a public method to get the next token in the file
+*/
 use std::fs::File;
 use std::io::Read;
 
@@ -51,78 +51,138 @@ impl Scanner {
         &self.cur_token
     }
 
-    pub fn read_next_token(&mut self) -> Token {
-        let mut byte = &self.src_code[self.scan_ptr];
-        let first_type = tokens::get_byte_type(*byte);
-        println!("\n==================================================");
-        println!("RUNNING RNT: b - {:?}, t - {:?}", *byte, first_type);
-
+    pub fn read_next_token(&mut self) -> Option<Token> {
         let mut token_value = vec![];
+        let mut token_type : Option<TokenType>;
 
-        loop {
-            let cur_type = tokens::get_byte_type(*byte);
-            if self.scan_ptr == (self.src_length - 1) as usize {
-                break Token::new(TokenType::Null, String::from(""));
-            }
+        if self.scan_ptr == (self.src_length - 0) as usize {
+            // Quit if we are at the end of the source vector
+            return None;
+        }
 
-            self.scan_ptr += 1;
-            let next_byte = &self.src_code[self.scan_ptr];
+        let mut byte = self.src_code[self.scan_ptr];
+        let first_type = tokens::get_byte_type(byte);
 
-            match first_type {
-                ByteType::ALPHA => match cur_type {
-                    ByteType::WHITE | ByteType::PUNCT => {
-                        let token_value = String::from_utf8(token_value).expect("Invalid utf8");
-                        break Token::new(TokenType::Ident, token_value);
-                    },
-                    _ => {/* do nothing yet */},
-                },
-                ByteType::DIGIT => match cur_type {
-                    ByteType::WHITE | ByteType::ALPHA => {
-                        let token_value = String::from_utf8(token_value).expect("Invalid utf8");
-                        break Token::new(TokenType::IntLit, token_value);
-                    },
-                    ByteType::PUNCT => {
-                        if *byte != 46 {
-                            let token_value = String::from_utf8(token_value).expect("Invalid utf8");
-                            break Token::new(TokenType::IntLit, token_value);
-                        }
-                    },
-                    _ => {/* do nothing yet */},
-                },
-                ByteType::PUNCT => {
-                    match *byte {
-                        58 => {
-                            // println!("{:?} - {:?} DEBUGG", *byte, *next_byte);
-                            if *next_byte == 61 {
-                                token_value.push(*byte);
-                                token_value.push(*next_byte);
-                                self.scan_ptr += 1;
-                                let token_value = String::from_utf8(token_value).expect("Invalid utf8");
-                                break Token::new(TokenType::OpAssign, token_value);
-                            }
-                        },
-                        43 => {
-                            break Token::new(TokenType::OpPlus, String::from("+"));
-                        },
-                        59 => {
-                            break Token::new(TokenType::Semi, String::from(";"));
-                        },
-                        _ => {
-                        /* do nothing yet */
-                        // println!("{:?} DEBUGG", *byte);
-                        }
-                    }
-                },
-                ByteType::WHITE => break Token::new(TokenType::Sep, String::from(" ")),
-                ByteType::INVLD => {
-                    /* do nothing yet */
-                },
-            }
+        println!("\n==================================================");
+        println!("RUNNING RNT: b - {:?}, t - {:?}, index = {:?}", byte, first_type, self.scan_ptr);
 
-            token_value.push(*byte);
+        let tup_result : (Option<TokenType>, Vec<u8>) = match first_type {
+            ByteType::ALPHA => self.match_alpha(),
+            ByteType::DIGIT => (None, vec![]),
+            ByteType::PUNCT => (None, vec![]),
+            ByteType::WHITE => (None, vec![]),
+            ByteType::INVLD => (None, vec![]),
+        };
 
-            println!("RNT: {}", byte);
-            byte = &self.src_code[self.scan_ptr];
+        token_type = tup_result.0;
+        token_value = tup_result.1;
+
+        match token_type {
+            Some(toktype) => {
+                let token_value = String::from_utf8(token_value).expect("Invalid utf8");
+                Some(Token::new(toktype, token_value))
+            },
+            None => {
+                self.scan_ptr += 1;
+                None
+            },
         }
     }
+
+    fn match_alpha (&mut self) -> (Option<TokenType>, Vec<u8>) {
+        let mut token_value = vec![];
+        let mut opt_type = Some(TokenType::Ident);
+
+        loop {
+            let mut byte = self.src_code[self.scan_ptr];
+            let cur_type = tokens::get_byte_type(byte);
+
+            println!("fellas {:?} {}", byte, self.scan_ptr);
+
+            match cur_type {
+                ByteType::WHITE => {
+                    break;
+                },
+                ByteType::PUNCT => {
+                    // Some punctuation will be allowed in Identifier names, some not
+                    if (byte != 95) {
+                        break;
+                    }
+                }
+                _ => {}
+            }
+
+            token_value.push(byte);
+            self.scan_ptr += 1;
+        };
+
+        (opt_type, token_value)
+    }
+
+    fn match_digit(&self, cur_type : &ByteType, byte : u8, token_value : Vec<u8>) -> Option<Token> {
+        match cur_type {
+            ByteType::WHITE | ByteType::ALPHA => {
+                let token_value = String::from_utf8(token_value).expect("Invalid utf8");
+                Some(Token::new(TokenType::IntLit, token_value))
+            },
+            ByteType::PUNCT => {
+                if byte != 46 {
+                    let token_value = String::from_utf8(token_value).expect("Invalid utf8");
+                    Some(Token::new(TokenType::IntLit, token_value))
+                } else {
+                    None
+                }
+            },
+            _ => {
+                /* do nothing yet */
+                None
+            },
+        }
+    }
+
+    fn match_punct(&mut self, byte : u8, mut token_value : &Vec<u8>) -> Option<Token> {
+        println!("Hello from punct {:?}", byte);
+        match byte {
+            58 => {
+                // println!("{:?} - {:?} DEBUGG", *byte, *next_byte);
+                let mut next_byte : Option<u8> = None;
+                let mut token_value = token_value.to_vec();
+
+                if self.scan_ptr + 1 < self.src_length as usize {
+                    next_byte = Some(self.src_code[self.scan_ptr + 1]);
+                };
+
+                if let Some(61) = next_byte {
+                    token_value.push(byte);
+                    token_value.push(next_byte.unwrap());
+                    self.scan_ptr += 1;
+                    let token_value = String::from_utf8(token_value).expect("Invalid utf8");
+                    Some(Token::new(TokenType::OpAssign, token_value))
+                } else {
+                    None
+                }
+            },
+            43 => {
+                Some(Token::new(TokenType::OpPlus, String::from("+")))
+            },
+            59 => {
+                println!("Hello from here");
+                Some(Token::new(TokenType::Semi, String::from(";")))
+            },
+            _ => {
+                /* do nothing yet */
+                // println!("{:?} DEBUGG", *byte);
+                None
+            }
+        }
+    }
+
+    fn match_white(&mut self) -> Option<Token> {
+        None
+    }
+
+    fn match_invld(&self) -> Option<Token> {
+        None
+    }
+    // end here
 }
