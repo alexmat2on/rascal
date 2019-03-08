@@ -52,9 +52,6 @@ impl Scanner {
     }
 
     pub fn read_next_token(&mut self) -> Option<Token> {
-        let mut token_value = vec![];
-        let mut token_type : Option<TokenType>;
-
         if self.scan_ptr == (self.src_length - 0) as usize {
             // Quit if we are at the end of the source vector
             return None;
@@ -66,16 +63,13 @@ impl Scanner {
         println!("\n==================================================");
         println!("RUNNING RNT: b - {:?}, t - {:?}, index = {:?}", byte, first_type, self.scan_ptr);
 
-        let tup_result : (Option<TokenType>, Vec<u8>) = match first_type {
+        let (token_type, token_value) : (Option<TokenType>, Vec<u8>) = match first_type {
             ByteType::ALPHA => self.match_alpha(),
-            ByteType::DIGIT => (None, vec![]),
-            ByteType::PUNCT => (None, vec![]),
-            ByteType::WHITE => (None, vec![]),
-            ByteType::INVLD => (None, vec![]),
+            ByteType::DIGIT => self.match_digit(),
+            ByteType::PUNCT => self.match_punct(),
+            ByteType::WHITE => self.match_white(),
+            ByteType::INVLD => self.match_invld(),
         };
-
-        token_type = tup_result.0;
-        token_value = tup_result.1;
 
         match token_type {
             Some(toktype) => {
@@ -119,70 +113,72 @@ impl Scanner {
         (opt_type, token_value)
     }
 
-    fn match_digit(&self, cur_type : &ByteType, byte : u8, token_value : Vec<u8>) -> Option<Token> {
-        match cur_type {
-            ByteType::WHITE | ByteType::ALPHA => {
-                let token_value = String::from_utf8(token_value).expect("Invalid utf8");
-                Some(Token::new(TokenType::IntLit, token_value))
-            },
-            ByteType::PUNCT => {
-                if byte != 46 {
-                    let token_value = String::from_utf8(token_value).expect("Invalid utf8");
-                    Some(Token::new(TokenType::IntLit, token_value))
-                } else {
-                    None
-                }
-            },
-            _ => {
-                /* do nothing yet */
-                None
-            },
-        }
+    fn match_digit (&mut self) -> (Option<TokenType>, Vec<u8>) {
+        // match cur_type {
+        //     ByteType::WHITE | ByteType::ALPHA => {
+        //         let token_value = String::from_utf8(token_value).expect("Invalid utf8");
+        //         Some(Token::new(TokenType::IntLit, token_value))
+        //     },
+        //     ByteType::PUNCT => {
+        //         if byte != 46 {
+        //             let token_value = String::from_utf8(token_value).expect("Invalid utf8");
+        //             Some(Token::new(TokenType::IntLit, token_value))
+        //         } else {
+        //             None
+        //         }
+        //     },
+        //     _ => {
+        //         /* do nothing yet */
+        //         None
+        //     },
+        // }
+        (None, vec![])
     }
 
-    fn match_punct(&mut self, byte : u8, mut token_value : &Vec<u8>) -> Option<Token> {
-        println!("Hello from punct {:?}", byte);
-        match byte {
-            58 => {
-                // println!("{:?} - {:?} DEBUGG", *byte, *next_byte);
-                let mut next_byte : Option<u8> = None;
-                let mut token_value = token_value.to_vec();
-
-                if self.scan_ptr + 1 < self.src_length as usize {
-                    next_byte = Some(self.src_code[self.scan_ptr + 1]);
-                };
-
-                if let Some(61) = next_byte {
-                    token_value.push(byte);
-                    token_value.push(next_byte.unwrap());
-                    self.scan_ptr += 1;
-                    let token_value = String::from_utf8(token_value).expect("Invalid utf8");
-                    Some(Token::new(TokenType::OpAssign, token_value))
-                } else {
-                    None
-                }
-            },
-            43 => {
-                Some(Token::new(TokenType::OpPlus, String::from("+")))
-            },
-            59 => {
-                println!("Hello from here");
-                Some(Token::new(TokenType::Semi, String::from(";")))
-            },
-            _ => {
-                /* do nothing yet */
-                // println!("{:?} DEBUGG", *byte);
-                None
-            }
-        }
+    fn match_punct (&mut self) -> (Option<TokenType>, Vec<u8>) {
+        (None, vec![])
+        // println!("Hello from punct {:?}", byte);
+        // match byte {
+        //     58 => {
+        //         // println!("{:?} - {:?} DEBUGG", *byte, *next_byte);
+        //         let mut next_byte : Option<u8> = None;
+        //         let mut token_value = token_value.to_vec();
+        //
+        //         if self.scan_ptr + 1 < self.src_length as usize {
+        //             next_byte = Some(self.src_code[self.scan_ptr + 1]);
+        //         };
+        //
+        //         if let Some(61) = next_byte {
+        //             token_value.push(byte);
+        //             token_value.push(next_byte.unwrap());
+        //             self.scan_ptr += 1;
+        //             let token_value = String::from_utf8(token_value).expect("Invalid utf8");
+        //             Some(Token::new(TokenType::OpAssign, token_value))
+        //         } else {
+        //             None
+        //         }
+        //     },
+        //     43 => {
+        //         Some(Token::new(TokenType::OpPlus, String::from("+")))
+        //     },
+        //     59 => {
+        //         println!("Hello from here");
+        //         Some(Token::new(TokenType::Semi, String::from(";")))
+        //     },
+        //     _ => {
+        //         /* do nothing yet */
+        //         // println!("{:?} DEBUGG", *byte);
+        //         None
+        //     }
+        // }
     }
 
-    fn match_white(&mut self) -> Option<Token> {
-        None
+    fn match_white (&mut self) -> (Option<TokenType>, Vec<u8>) {
+        (None, vec![])
     }
 
-    fn match_invld(&self) -> Option<Token> {
-        None
+    fn match_invld (&mut self) -> (Option<TokenType>, Vec<u8>) {
+        (None, vec![])
     }
     // end here
 }
