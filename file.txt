@@ -1,1 +1,1 @@
-X Alha Er98 t_3;
+Sum := a + 32;

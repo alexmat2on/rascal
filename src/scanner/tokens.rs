@@ -14,15 +14,15 @@ impl Token {
 }
 
 /* Names for different types of Tokens */
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TokenType {
     Null,   // Only used (currently) for initializing the Scanner, might be able to remove this in the future
     Eof,
-    Sep,
+    // Sep,
 
     // Keywords
-    Begin,
-    End,
+    // Begin,
+    // End,
 
     // Operators
     OpPlus,
@@ -31,7 +31,7 @@ pub enum TokenType {
     // Constants
     IntLit,
     RealLit,
-    StrLit,
+    // StrLit,
 
     // Other
     Ident,

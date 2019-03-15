@@ -37,31 +37,36 @@ impl Scanner {
         }
     }
 
-    pub fn print_types(&self) {
-        for b in &self.src_code {
-            let tp = tokens::get_byte_type(*b);
-            println!("{}", *b);
-        }
-    }
-
-    pub fn get_token(&self) -> &Token {
+    pub fn get_token(&mut self) -> &Token {
         // 1. Go through src_code to detect the next token
         // 2. Assign it to cur_token
         // 3. Return
+        let mut read_token = self.read_next_token();
+
+        loop {
+            if read_token.is_some() {
+                self.cur_token = read_token.unwrap();
+                break;
+            }
+            read_token = self.read_next_token();
+        }
+
         &self.cur_token
     }
 
-    pub fn read_next_token(&mut self) -> Option<Token> {
-        if self.scan_ptr == (self.src_length - 0) as usize {
+    pub fn reached_eof(&self) -> bool {
+        self.scan_ptr == (self.src_length - 1) as usize
+    }
+
+    fn read_next_token(&mut self) -> Option<Token> {
+        if self.scan_ptr == (self.src_length - 1) as usize {
             // Quit if we are at the end of the source vector
-            return None;
+            println!("Reached end of token stream.");
+            return Some(Token::new(TokenType::Eof, "\0".to_string()));
         }
 
-        let mut byte = self.src_code[self.scan_ptr];
+        let byte = self.src_code[self.scan_ptr];
         let first_type = tokens::get_byte_type(byte);
-
-        println!("\n==================================================");
-        println!("RUNNING RNT: b - {:?}, t - {:?}, index = {:?}", byte, first_type, self.scan_ptr);
 
         let (token_type, token_value) : (Option<TokenType>, Vec<u8>) = match first_type {
             ByteType::ALPHA => self.match_alpha(),
@@ -85,13 +90,13 @@ impl Scanner {
 
     fn match_alpha (&mut self) -> (Option<TokenType>, Vec<u8>) {
         let mut token_value = vec![];
-        let mut opt_type = Some(TokenType::Ident);
+        let opt_type = Some(TokenType::Ident);
 
         loop {
-            let mut byte = self.src_code[self.scan_ptr];
+            let byte = self.src_code[self.scan_ptr];
             let cur_type = tokens::get_byte_type(byte);
 
-            println!("fellas {:?} {}", byte, self.scan_ptr);
+            // println!("fellas {:?} {}", byte, self.scan_ptr);
 
             match cur_type {
                 ByteType::WHITE => {
@@ -99,7 +104,7 @@ impl Scanner {
                 },
                 ByteType::PUNCT => {
                     // Some punctuation will be allowed in Identifier names, some not
-                    if (byte != 95) {
+                    if byte != 95 {
                         break;
                     }
                 }
@@ -114,63 +119,92 @@ impl Scanner {
     }
 
     fn match_digit (&mut self) -> (Option<TokenType>, Vec<u8>) {
-        // match cur_type {
-        //     ByteType::WHITE | ByteType::ALPHA => {
-        //         let token_value = String::from_utf8(token_value).expect("Invalid utf8");
-        //         Some(Token::new(TokenType::IntLit, token_value))
-        //     },
-        //     ByteType::PUNCT => {
-        //         if byte != 46 {
-        //             let token_value = String::from_utf8(token_value).expect("Invalid utf8");
-        //             Some(Token::new(TokenType::IntLit, token_value))
-        //         } else {
-        //             None
-        //         }
-        //     },
-        //     _ => {
-        //         /* do nothing yet */
-        //         None
-        //     },
-        // }
-        (None, vec![])
+        let mut token_value = vec![];
+        let mut opt_type = Some(TokenType::IntLit);
+
+        let mut found_decimal = false;
+
+        loop {
+            let byte = self.src_code[self.scan_ptr];
+            let cur_type = tokens::get_byte_type(byte);
+
+            match cur_type {
+                ByteType::WHITE => {
+                    break;
+                },
+                ByteType::PUNCT => {
+                    // Some punctuation will be allowed in numeric literals names, like "."
+                    if byte != 46 || found_decimal {
+                        break;
+                    }
+
+                    if byte == 46 {
+                        found_decimal = true;
+                        opt_type = Some(TokenType::RealLit);
+                    }
+                }
+                _ => {}
+            }
+
+            token_value.push(byte);
+            self.scan_ptr += 1;
+        };
+
+        (opt_type, token_value)
     }
 
     fn match_punct (&mut self) -> (Option<TokenType>, Vec<u8>) {
-        (None, vec![])
-        // println!("Hello from punct {:?}", byte);
-        // match byte {
-        //     58 => {
-        //         // println!("{:?} - {:?} DEBUGG", *byte, *next_byte);
-        //         let mut next_byte : Option<u8> = None;
-        //         let mut token_value = token_value.to_vec();
-        //
-        //         if self.scan_ptr + 1 < self.src_length as usize {
-        //             next_byte = Some(self.src_code[self.scan_ptr + 1]);
-        //         };
-        //
-        //         if let Some(61) = next_byte {
-        //             token_value.push(byte);
-        //             token_value.push(next_byte.unwrap());
-        //             self.scan_ptr += 1;
-        //             let token_value = String::from_utf8(token_value).expect("Invalid utf8");
-        //             Some(Token::new(TokenType::OpAssign, token_value))
-        //         } else {
-        //             None
-        //         }
-        //     },
-        //     43 => {
-        //         Some(Token::new(TokenType::OpPlus, String::from("+")))
-        //     },
-        //     59 => {
-        //         println!("Hello from here");
-        //         Some(Token::new(TokenType::Semi, String::from(";")))
-        //     },
-        //     _ => {
-        //         /* do nothing yet */
-        //         // println!("{:?} DEBUGG", *byte);
-        //         None
-        //     }
-        // }
+        let mut token_value = vec![];
+        let mut opt_type : Option<TokenType> = None;
+
+        loop {
+            let byte = self.src_code[self.scan_ptr];
+            let cur_type = tokens::get_byte_type(byte);
+
+            // println!("fellas {:?} {}", byte, self.scan_ptr);
+
+            match cur_type {
+                ByteType::ALPHA => break,
+                ByteType::WHITE => break,
+                ByteType::DIGIT => break,
+                ByteType::INVLD => break,
+                ByteType::PUNCT => {
+                    // Some punctuation will be allowed in Identifier names, some not
+                    match byte {
+                        40 => {
+                            opt_type = Some(TokenType::LParen);
+                        },
+                        41 => {
+                            opt_type = Some(TokenType::RParen);
+                        },
+                        43 => {
+                            opt_type = Some(TokenType::OpPlus);
+                        },
+                        58 => {
+                            let next_byte = self.src_code[self.scan_ptr + 1];
+                            if next_byte == 61 {
+                                opt_type = Some(TokenType::OpAssign);
+                                token_value.push(byte);
+                                token_value.push(next_byte);
+                                self.scan_ptr += 2;
+                                break;
+                            }
+                        },
+                        59 => {
+                            opt_type = Some(TokenType::Semi);
+                        },
+                        _ => {
+                            opt_type = None;
+                        }
+                    }
+                }
+            }
+
+            token_value.push(byte);
+            self.scan_ptr += 1;
+        };
+
+        (opt_type, token_value)
     }
 
     fn match_white (&mut self) -> (Option<TokenType>, Vec<u8>) {

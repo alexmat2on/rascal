@@ -2,7 +2,6 @@
  * Main LIBRARY file for RASCAL
  * Utilizes the scanner module
  */
-use std::fs;
 use std::error::Error;
 
 mod scanner;
@@ -24,25 +23,12 @@ impl Config {
     }
 }
 
-pub fn run(config: Config) -> Result<(), Box<dyn Error>>{
-    let contents = fs::read_to_string(&config.filename)?;
-
-    println!("{}", contents);
-
+pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let mut scan = Scanner::new(&config.filename);
-    scan.print_types();
-    println!("tok: {:?}", scan.read_next_token());
-    println!("tok: {:?}", scan.read_next_token());
-    println!("tok: {:?}", scan.read_next_token());
-    println!("tok: {:?}", scan.read_next_token());
-    println!("tok: {:?}", scan.read_next_token());
-    println!("tok: {:?}", scan.read_next_token());
-    println!("tok: {:?}", scan.read_next_token());
-    println!("tok: {:?}", scan.read_next_token());
-    println!("tok: {:?}", scan.read_next_token());
-    println!("tok: {:?}", scan.read_next_token());
-    println!("tok: {:?}", scan.read_next_token());
-    println!("tok: {:?}", scan.read_next_token());
+
+    while !scan.reached_eof() {
+        println!("tok: {:?}", scan.get_token());
+    }
 
     Ok(())
 }
