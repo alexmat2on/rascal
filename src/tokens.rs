@@ -18,7 +18,6 @@ impl Token {
 pub enum TokenType {
     Null,   // Only used (currently) for initializing the Scanner, might be able to remove this in the future
     Eof,
-    // Sep,
 
     // Keywords
     // Begin,
@@ -26,6 +25,9 @@ pub enum TokenType {
 
     // Operators
     OpPlus,
+    OpMult,
+    OpMinus,
+    OpDivi,
     OpAssign,
 
     // Constants

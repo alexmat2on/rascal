@@ -2,10 +2,13 @@
  * Main LIBRARY file for RASCAL
  * Utilizes the scanner module
  */
-use std::error::Error;
-
+mod tokens;
 mod scanner;
+mod parser;
+
+use std::error::Error;
 use scanner::Scanner;
+use parser::Parser;
 
 pub struct Config {
     pub filename: String,
@@ -24,11 +27,10 @@ impl Config {
 }
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let mut scan = Scanner::new(&config.filename);
+    let scan = Scanner::new(&config.filename);
+    let mut parser = Parser::new(scan);
 
-    while !scan.reached_eof() {
-        println!("tok: {:?}", scan.get_token());
-    }
+    parser.parse();
 
     Ok(())
 }

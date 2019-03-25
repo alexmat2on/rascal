@@ -10,10 +10,10 @@
 use std::fs::File;
 use std::io::Read;
 
-mod tokens;
-use tokens::Token;
-use tokens::TokenType;
-use tokens::ByteType;
+use crate::tokens;
+use crate::tokens::Token;
+use crate::tokens::TokenType;
+use crate::tokens::ByteType;
 
 pub struct Scanner {
     src_code: Vec<u8>,
@@ -96,10 +96,9 @@ impl Scanner {
             let byte = self.src_code[self.scan_ptr];
             let cur_type = tokens::get_byte_type(byte);
 
-            // println!("fellas {:?} {}", byte, self.scan_ptr);
-
             match cur_type {
                 ByteType::WHITE => {
+                    // let isKeyword = match_keyword (&self, String::from_utf8(token_value);
                     break;
                 },
                 ByteType::PUNCT => {
@@ -117,6 +116,10 @@ impl Scanner {
 
         (opt_type, token_value)
     }
+
+    // fn match_keyword (&self, tval : String) -> Option<TokenType> {
+    //
+    // }
 
     fn match_digit (&mut self) -> (Option<TokenType>, Vec<u8>) {
         let mut token_value = vec![];
@@ -172,15 +175,31 @@ impl Scanner {
                     // Some punctuation will be allowed in Identifier names, some not
                     match byte {
                         40 => {
+                            // (
                             opt_type = Some(TokenType::LParen);
                         },
                         41 => {
+                            // )
                             opt_type = Some(TokenType::RParen);
                         },
+                        42 => {
+                            // *
+                            opt_type = Some(TokenType::OpMult);
+                        }
                         43 => {
+                            // +
                             opt_type = Some(TokenType::OpPlus);
                         },
+                        45 => {
+                            // -
+                            opt_type = Some(TokenType::OpMinus);
+                        },
+                        47 => {
+                            // /
+                            opt_type = Some(TokenType::OpDivi);
+                        }
                         58 => {
+                            // :
                             let next_byte = self.src_code[self.scan_ptr + 1];
                             if next_byte == 61 {
                                 opt_type = Some(TokenType::OpAssign);
@@ -191,6 +210,7 @@ impl Scanner {
                             }
                         },
                         59 => {
+                            // ;
                             opt_type = Some(TokenType::Semi);
                         },
                         _ => {
