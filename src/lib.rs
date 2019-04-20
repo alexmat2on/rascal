@@ -3,6 +3,7 @@
  * Utilizes the scanner module
  */
 mod tokens;
+// mod symbtab;
 mod scanner;
 mod parser;
 
