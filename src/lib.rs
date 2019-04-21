@@ -6,10 +6,12 @@ mod tokens;
 // mod symbtab;
 mod scanner;
 mod parser;
+mod rvm;
 
 use std::error::Error;
 use scanner::Scanner;
 use parser::Parser;
+use rvm::RvmMachine;
 
 pub struct Config {
     pub filename: String,
@@ -32,6 +34,21 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let mut parser = Parser::new(scan);
 
     parser.parse();
+
+    println!("The generated code is: {:?}", parser.code);
+
+    let mut rvm = RvmMachine::new(
+        vec![
+            0x01, 0x00, 0x00, 0x00, 0x05,
+            0x01, 0x00, 0x00, 0x00, 0x14,
+            0x10,
+            0x00
+        ]
+    );
+    rvm.exec();
+
+    let mut rvm2 = RvmMachine::new(parser.code);
+    rvm2.exec();
 
     Ok(())
 }

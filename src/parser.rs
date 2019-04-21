@@ -34,12 +34,13 @@ enum Type {
 
 pub struct Parser {
     scan : Scanner,
+    pub code : Vec<u8>,
 }
 
 #[allow(non_snake_case)]
 impl Parser {
     pub fn new (scan : Scanner) -> Parser {
-        Parser { scan }
+        Parser { scan, code: Vec::new() }
     }
 
     pub fn parse(&mut self) {
@@ -48,6 +49,7 @@ impl Parser {
         self.parse_t();
         self.parse_ep();
         self.match_tok(TokenType::Eof);
+        self.code.push(0x00);
     }
 
     fn match_tok(&mut self, tok: TokenType) {
@@ -68,11 +70,16 @@ impl Parser {
             self.parse_t();
             self.parse_ep();
             println!("y {}", decorator);
+            self.code.push(0x10);
         }
     }
 
     fn parse_t(&mut self) {
         println!("x {}", self.scan.cur_token.token_value);
+        self.code.push(0x01);
+        let value_int : u32 = self.scan.cur_token.token_value.parse().expect("Expected u32");
+        let mut value_bytes = value_int.to_be_bytes().to_vec();
+        self.code.append(&mut value_bytes);
         self.match_tok(TokenType::IntLit);
     }
 }
