@@ -2,6 +2,7 @@
  * Main LIBRARY file for RASCAL
  * Utilizes the scanner module
  */
+mod errors;
 mod tokens;
 // mod symbtab;
 mod scanner;
@@ -30,10 +31,10 @@ impl Config {
 }
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let scan = Scanner::new(&config.filename);
+    let scan = Scanner::new(&config.filename)?;
     let mut parser = Parser::new(scan);
 
-    parser.parse();
+    parser.parse()?;
 
     println!("The generated code is: {:?}", parser.code);
 

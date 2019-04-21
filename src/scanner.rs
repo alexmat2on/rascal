@@ -9,7 +9,9 @@
 */
 use std::fs::File;
 use std::io::Read;
+use std::error::Error;
 
+use crate::errors::scanner_error;
 use crate::tokens;
 use crate::tokens::Token;
 use crate::tokens::TokenType;
@@ -25,34 +27,55 @@ pub struct Scanner {
     pub col_num: usize
 }
 
-impl Scanner {
-    pub fn new(filename : &String) -> Scanner {
-        let mut buffer = vec![];
+fn load_buffer(filename: &String) -> Result<(Vec<u8>, usize), String> {
+    let mut buffer = vec![];
 
-        let mut f = File::open(filename).unwrap();
-        let len = f.read_to_end(&mut buffer).unwrap();
+    let mut open_file;
+    match File::open(filename) {
+        Ok(f) => open_file = f,
+        Err(e) => return Err(String::from("Could not open file."))
+    };
+
+    let mut f_length;
+    match open_file.read_to_end(&mut buffer) {
+        Ok(x) => f_length = x,
+        Err(e) => return Err(String::from("Could not read file to buffer."))
+    };
+
+    Ok((buffer, f_length))
+}
+
+impl Scanner {
+    pub fn new(filename : &String) -> Result<Scanner, String> {
+        let mut src_load = load_buffer(filename)?;
 
         let mut res = Scanner {
-            src_code: buffer,
-            src_length: len,
+            src_code: src_load.0,
+            src_length: src_load.1,
             scan_ptr: 0,
             cur_token: Token::new(TokenType::Null, String::from(""), (0, 0)),
             line_num: 1,
             col_num: 1
         };
-        res.get_token();
-        res
+
+        res.get_token()?;
+        Ok(res)
     }
 
-    pub fn get_token(&mut self) {
+    pub fn get_token(&mut self) -> Result<(), String> {
         // Create operator table
+        if self.src_length == 0 {
+            let errmsg = format!("Err: Empty source file.");
+            return Err(errmsg.to_string())
+        };
+
+
         let maybe_eof = self.check_eof();
-        let original_scan_ptr = self.scan_ptr.clone();
         self.cur_token = match maybe_eof {
             Some(eof) => eof,
             None => {
                 let first_char = tokens::get_char_group(self.get_char());
-                match first_char {
+                let potential_token = match first_char {
                     // A integer or numeric literal
                     CharGroup::DIGIT => self.get_num_lit(),
 
@@ -73,18 +96,36 @@ impl Scanner {
 
                         self.scan_ptr += 1;
                         self.col_num += 1;
-                        self.get_token();
 
-                        self.cur_token.clone()
+                        match self.get_token() {
+                            Ok(t) => Ok(self.cur_token.clone()),
+                            Err(e) => Err(e)
+                        }
+
+                        // Ok(self.cur_token.clone())
                     },
-                    
+
                     CharGroup::INVLD | _ => {
                         // Scanner error
-                        panic!("omg no");
+                        let mut character = self.get_char() as char;
+                        let errmsg = scanner_error(
+                            "Illegal character".to_string(),
+                            character.to_string(),
+                            self.line_num,
+                            self.col_num,
+                        );
+                        Err(errmsg)
                     }
+                };
+
+                match potential_token {
+                    Ok(token) => token,
+                    Err(e) => return Err(e)
                 }
             }
-        }
+        };
+
+        Ok(())
     }
 
     fn get_char(&self) -> u8 {
@@ -99,7 +140,7 @@ impl Scanner {
         }
     }
 
-    fn get_num_lit(&mut self) -> Token {
+    fn get_num_lit(&mut self) -> Result<Token, String> {
         let mut value = vec![];
         let mut ttype = TokenType::IntLit;
         let cnum = self.col_num.clone();
@@ -125,15 +166,20 @@ impl Scanner {
             self.col_num += 1;
         }
 
-        let value_str = String::from_utf8(value).expect("Found invalid UTF-8");
-        Token::new(ttype, value_str, (self.line_num, cnum))
+        let value_str : String;
+        match String::from_utf8(value) {
+            Ok(vstr) => value_str = vstr,
+            Err(e) => return Err(String::from("A UTF-8 Error Occurred"))
+        }
+
+        Ok(Token::new(ttype, value_str, (self.line_num, cnum)))
     }
 
-    fn get_identifier(&self) -> Token {
-        Token::new(TokenType::Null, String::from(""), (0, 0))
+    fn get_identifier(&self) -> Result<Token, String> {
+        Ok(Token::new(TokenType::Null, String::from(""), (0, 0)))
     }
 
-    fn get_symb(&mut self) -> Token {
+    fn get_symb(&mut self) -> Result<Token, String> {
         let mut value = vec![];
         let cnum = self.col_num.clone();
 
@@ -148,13 +194,26 @@ impl Scanner {
 
             self.scan_ptr += 1;
             self.col_num += 1;
-        }
+        };
 
-        let value_str = String::from_utf8(value).expect("Found invalid UTF-8");
+        let value_str : String;
+        match String::from_utf8(value) {
+            Ok(vstr) => value_str = vstr,
+            Err(e) => return Err(String::from("A UTF-8 Error Occurred"))
+        };
+
         match &value_str[..] {
-            "+" => Token::new(TokenType::OpPlus, value_str, (self.line_num, cnum)),
-            "-" => Token::new(TokenType::OpMinus, value_str, (self.line_num, cnum)),
-            _ => panic!("Invalid operator")
+            "+" => Ok(Token::new(TokenType::OpPlus, value_str, (self.line_num, cnum))),
+            "-" => Ok(Token::new(TokenType::OpMinus, value_str, (self.line_num, cnum))),
+            _ => {
+                let errmsg = scanner_error(
+                    "Invalid operator or symbol".to_string(),
+                    value_str,
+                    self.line_num,
+                    cnum
+                );
+                return Err(errmsg)
+            }
         }
     }
 }

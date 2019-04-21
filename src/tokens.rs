@@ -43,6 +43,27 @@ pub enum TokenType {
     Semi,
 }
 
+impl TokenType {
+    pub fn to_str(&self) -> &str {
+        match *self {
+            TokenType::IntLit => "TK_INTLIT",
+            TokenType::OpPlus => "TK_OPPLUS",
+            TokenType::Eof => "TK_EOF",
+            _ => "OTHER"
+        }
+    }
+}
+
+impl fmt::Display for TokenType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            TokenType::IntLit => write!(f, "TK_INTLIT"),
+            TokenType::OpPlus => write!(f, "TK_OPPLUS"),
+            _ => write!(f, "OTHER")
+        }
+    }
+}
+
 /* Names for different categories of character values the scanner might encounter */
 #[derive(Debug, Copy, Clone)]
 pub enum CharGroup {
@@ -110,7 +131,7 @@ pub fn get_char_group(value: u8) -> CharGroup {
         CharGroup::PUNCT,  // 33   !
         CharGroup::PUNCT,  // 34   "
         CharGroup::PUNCT,  // 35   #
-        CharGroup::PUNCT,  // 36   $
+        CharGroup::INVLD,  // 36   $
         CharGroup::PUNCT,  // 37   %
         CharGroup::PUNCT,  // 38   &
         CharGroup::PUNCT,  // 39   '

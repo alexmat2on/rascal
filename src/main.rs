@@ -19,7 +19,7 @@ fn main() {
     });
 
     if let Err(e) = rascal::run(config) {
-        eprintln!("Application error: {}", e);
+        eprintln!("{}", e);
         process::exit(1);
     }
 }
