@@ -25,9 +25,12 @@
 *       F  -> (E) | lit | id | +F | -F
 */
 use crate::errors::parser_error;
-use crate::scanner::Scanner;
 // use crate::tokens::Token;
 use crate::tokens::TokenType;
+use crate::scanner::Scanner;
+
+use crate::codegen::CodeGenerator;
+use crate::codegen::rvm_gen::RvmGenerator;
 
 enum Type {
     I, R, B, C
@@ -35,20 +38,23 @@ enum Type {
 
 pub struct Parser {
     scan : Scanner,
-    pub code : Vec<u8>,
+    pub gen: RvmGenerator,
 }
 
 #[allow(non_snake_case)]
 impl Parser {
     pub fn new (scan : Scanner) -> Parser {
-        Parser { scan, code: Vec::new() }
+        Parser {
+            scan,
+            gen: RvmGenerator::new()
+        }
     }
 
     pub fn parse(&mut self) -> Result<(), String> {
         self.parse_t()?;
         self.parse_ep()?;
         self.match_tok(TokenType::Eof)?;
-        self.code.push(0x00);
+        self.gen.op("OP_EXIT");
         Ok(())
     }
 
@@ -74,22 +80,17 @@ impl Parser {
         if self.scan.cur_token.token_type == TokenType::OpPlus {
             let decorator = self.scan.cur_token.clone();
             self.match_tok(TokenType::OpPlus)?;
-            // println!("c {}", self.scan.cur_token.token_value);
             self.parse_t()?;
             self.parse_ep()?;
-            // println!("y {:?}", decorator);
-            self.code.push(0x10);
+            self.gen.op("OP_ADD");
         }
         Ok(())
     }
 
     fn parse_t(&mut self) -> Result<(), String> {
         if self.scan.cur_token.token_type == TokenType::IntLit {
-            self.code.push(0x01);
-
-            let value_int : u32 = self.scan.cur_token.token_value.parse().expect("Expected u32");
-            let mut value_bytes = value_int.to_be_bytes().to_vec();
-            self.code.append(&mut value_bytes);
+            self.gen.op("OP_PUSH");
+            self.gen.data(self.scan.cur_token.token_value.clone(), "u32", 4);
 
             self.match_tok(TokenType::IntLit)?;
         } else {

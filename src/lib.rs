@@ -7,6 +7,7 @@ mod tokens;
 // mod symbtab;
 mod scanner;
 mod parser;
+mod codegen;
 mod rvm;
 
 use std::error::Error;
@@ -36,20 +37,10 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
     parser.parse()?;
 
-    println!("The generated code is: {:?}", parser.code);
+    println!("The generated code is: {:?}", parser.gen.code);
 
-    let mut rvm = RvmMachine::new(
-        vec![
-            0x01, 0x00, 0x00, 0x00, 0x05,
-            0x01, 0x00, 0x00, 0x00, 0x14,
-            0x10,
-            0x00
-        ]
-    );
+    let mut rvm = RvmMachine::new(parser.gen.code);
     rvm.exec();
-
-    let mut rvm2 = RvmMachine::new(parser.code);
-    rvm2.exec();
 
     Ok(())
 }

@@ -26,7 +26,6 @@ impl RvmMachine {
     pub fn exec(&mut self) {
         loop {
             let opcode = self.code[self.ip];
-            println!("Running... {}", opcode);
             match opcode {
                 0x00 => break,
                 0x01 => {
