@@ -64,18 +64,18 @@ impl Parser {
         // println!("b {}", self.scan.cur_token.token_value);
 
         if self.scan.cur_token.token_type == TokenType::OpPlus {
-            let decorator = self.scan.cur_token.token_value.clone();
+            let decorator = self.scan.cur_token.clone();
             self.match_tok(TokenType::OpPlus);
             // println!("c {}", self.scan.cur_token.token_value);
             self.parse_t();
             self.parse_ep();
-            println!("y {}", decorator);
+            println!("y {:?}", decorator);
             self.code.push(0x10);
         }
     }
 
     fn parse_t(&mut self) {
-        println!("x {}", self.scan.cur_token.token_value);
+        println!("x {:?}", self.scan.cur_token);
         self.code.push(0x01);
         let value_int : u32 = self.scan.cur_token.token_value.parse().expect("Expected u32");
         let mut value_bytes = value_int.to_be_bytes().to_vec();

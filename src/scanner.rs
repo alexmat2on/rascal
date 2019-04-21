@@ -21,6 +21,8 @@ pub struct Scanner {
     src_length: usize,
     scan_ptr: usize,
     pub cur_token: Token,
+    pub line_num: usize,
+    pub col_num: usize
 }
 
 impl Scanner {
@@ -34,7 +36,9 @@ impl Scanner {
             src_code: buffer,
             src_length: len,
             scan_ptr: 0,
-            cur_token: Token::new(TokenType::Null, String::from("")),
+            cur_token: Token::new(TokenType::Null, String::from(""), (0, 0)),
+            line_num: 1,
+            col_num: 1
         };
         res.get_token();
         res
@@ -43,22 +47,37 @@ impl Scanner {
     pub fn get_token(&mut self) {
         // Create operator table
         let maybe_eof = self.check_eof();
+        let original_scan_ptr = self.scan_ptr.clone();
         self.cur_token = match maybe_eof {
             Some(eof) => eof,
             None => {
                 let first_char = tokens::get_char_group(self.get_char());
                 match first_char {
-                    CharGroup::DIGIT => self.get_num_lit(), // A integer or numeric literal
-                    CharGroup::ALPHA => self.get_identifier(), // An identifier: variable, function name, ...
+                    // A integer or numeric literal
+                    CharGroup::DIGIT => self.get_num_lit(),
+
+                    // An identifier: variable, function name, ...
+                    CharGroup::ALPHA => self.get_identifier(),
+
                     // CharGroup::QUOTE => (), // A string or char literal... ?? will i keep this?
-                    CharGroup::PUNCT => self.get_symb(), // A symbol, operator, ...
+
+                    // A symbol, operator, ...
+                    CharGroup::PUNCT => self.get_symb(),
+
+                    // Skip character
                     CharGroup::WHITE => {
-                        // Skip character
+                        if self.get_char() == 10 || self.get_char() == 13 {
+                            self.line_num += 1;
+                            self.col_num = 0;
+                        }
+
                         self.scan_ptr += 1;
+                        self.col_num += 1;
                         self.get_token();
 
                         self.cur_token.clone()
                     },
+                    
                     CharGroup::INVLD | _ => {
                         // Scanner error
                         panic!("omg no");
@@ -68,13 +87,13 @@ impl Scanner {
         }
     }
 
-    pub fn get_char(&self) -> u8 {
+    fn get_char(&self) -> u8 {
         self.src_code[self.scan_ptr]
     }
 
     fn check_eof(&self) -> Option<Token> {
         if self.scan_ptr == self.src_length - 1 {
-            Some(Token::new(TokenType::Eof, String::from("#")))
+            Some(Token::new(TokenType::Eof, String::from("#"), (self.line_num, self.col_num)))
         } else {
             None
         }
@@ -83,6 +102,7 @@ impl Scanner {
     fn get_num_lit(&mut self) -> Token {
         let mut value = vec![];
         let mut ttype = TokenType::IntLit;
+        let cnum = self.col_num.clone();
 
         loop {
             let char = self.get_char();
@@ -102,18 +122,20 @@ impl Scanner {
             }
 
             self.scan_ptr += 1;
+            self.col_num += 1;
         }
 
         let value_str = String::from_utf8(value).expect("Found invalid UTF-8");
-        Token::new(ttype, value_str)
+        Token::new(ttype, value_str, (self.line_num, cnum))
     }
 
     fn get_identifier(&self) -> Token {
-        Token::new(TokenType::Null, String::from(""))
+        Token::new(TokenType::Null, String::from(""), (0, 0))
     }
 
     fn get_symb(&mut self) -> Token {
         let mut value = vec![];
+        let cnum = self.col_num.clone();
 
         loop {
             let char = self.get_char();
@@ -125,12 +147,13 @@ impl Scanner {
             }
 
             self.scan_ptr += 1;
+            self.col_num += 1;
         }
 
         let value_str = String::from_utf8(value).expect("Found invalid UTF-8");
         match &value_str[..] {
-            "+" => Token::new(TokenType::OpPlus, value_str),
-            "-" => Token::new(TokenType::OpMinus, value_str),
+            "+" => Token::new(TokenType::OpPlus, value_str, (self.line_num, cnum)),
+            "-" => Token::new(TokenType::OpMinus, value_str, (self.line_num, cnum)),
             _ => panic!("Invalid operator")
         }
     }

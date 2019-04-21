@@ -5,11 +5,12 @@ use std::fmt;
 pub struct Token {
     pub token_type: TokenType,
     pub token_value: String,
+    pub src_info: (usize, usize)
 }
 
 impl Token {
-    pub fn new(token_type : TokenType, token_value : String) -> Token {
-        Token { token_type, token_value }
+    pub fn new(token_type: TokenType, token_value: String, src_info: (usize, usize)) -> Token {
+        Token { token_type, token_value, src_info }
     }
 }
 
