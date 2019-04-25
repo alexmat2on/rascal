@@ -4,18 +4,7 @@
 * The Parser -- implemented as an LL(1) / top-down recursive descent parser --
 * will read a token and apply a grammar production rule to it.
 *
-* Grammar: E  -> TE'
-*          E' -> +TE' | NULL
-*          T  -> intlit
-
-
-* E  -> TE'
-* E' -> +TE' | -TE' | NULL
-* T  -> FT'
-* T' -> *FT' | /FT' | NULL
-* F  -> lit
-*
-* The grammer specification (removing instances of immediate left recursion) is as follows:
+* The expression grammer specification (removing instances of immediate left recursion) is as follows:
 *       E  -> TE'
 *       E' -> +TE' | -TE' | NULL
 *
@@ -52,6 +41,7 @@ impl Parser {
 
     pub fn parse(&mut self) -> Result<(), String> {
         self.expression()?;
+        self.gen.op("OP_EXIT");
         Ok(())
     }
 
@@ -76,8 +66,6 @@ impl Parser {
     fn expression(&mut self) -> Result<(), String> {
         self.term()?;
         self.expression_p()?;
-
-        self.gen.op("OP_EXIT");
         Ok(())
     }
 
@@ -135,6 +123,11 @@ impl Parser {
                 self.gen.data(tok.token_value.clone(), "u32", 4);
 
                 self.match_tok(TokenType::IntLit)?;
+            },
+            TokenType::LParen => {
+                self.match_tok(TokenType::LParen)?;
+                self.expression()?;
+                self.match_tok(TokenType::RParen)?;
             },
             _ => {
                 let errmsg = parser_error("TK_INTLIT", self.scan.cur_token.clone());

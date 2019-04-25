@@ -2,7 +2,7 @@ use crate::tokens::Token;
 
 pub fn scanner_error(msg: String, value : String, lineno : usize, colno : usize) -> String {
     let msg = format!(
-        "Scanner Error: {} [{}] ({}:{})",
+        "Scanner Error: {} [ {} ] ({}:{})",
         msg,
         value,
         lineno,

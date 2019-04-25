@@ -15,6 +15,8 @@ impl Token {
 
     pub fn to_op(&self) -> &str {
         match self.token_type {
+            TokenType::Null => "NOP",
+            TokenType::Eof => "OP_EXIT",
             TokenType::OpPlus => "OP_ADD",
             TokenType::OpMinus => "OP_SUB",
             TokenType::OpMult => "OP_MULT",

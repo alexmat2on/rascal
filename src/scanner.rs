@@ -9,7 +9,6 @@
 */
 use std::fs::File;
 use std::io::Read;
-use std::error::Error;
 
 use crate::errors::scanner_error;
 use crate::tokens;
@@ -33,13 +32,13 @@ fn load_buffer(filename: &String) -> Result<(Vec<u8>, usize), String> {
     let mut open_file;
     match File::open(filename) {
         Ok(f) => open_file = f,
-        Err(e) => return Err(String::from("Could not open file."))
+        Err(_e) => return Err(String::from("Could not open file."))
     };
 
-    let mut f_length;
+    let f_length;
     match open_file.read_to_end(&mut buffer) {
         Ok(x) => f_length = x,
-        Err(e) => return Err(String::from("Could not read file to buffer."))
+        Err(_e) => return Err(String::from("Could not read file to buffer."))
     };
 
     Ok((buffer, f_length))
@@ -47,7 +46,7 @@ fn load_buffer(filename: &String) -> Result<(Vec<u8>, usize), String> {
 
 impl Scanner {
     pub fn new(filename : &String) -> Result<Scanner, String> {
-        let mut src_load = load_buffer(filename)?;
+        let src_load = load_buffer(filename)?;
 
         let mut res = Scanner {
             src_code: src_load.0,
@@ -98,16 +97,14 @@ impl Scanner {
                         self.col_num += 1;
 
                         match self.get_token() {
-                            Ok(t) => Ok(self.cur_token.clone()),
+                            Ok(_t) => Ok(self.cur_token.clone()),
                             Err(e) => Err(e)
                         }
-
-                        // Ok(self.cur_token.clone())
                     },
 
                     CharGroup::INVLD | _ => {
                         // Scanner error
-                        let mut character = self.get_char() as char;
+                        let character = self.get_char() as char;
                         let errmsg = scanner_error(
                             "Illegal character".to_string(),
                             character.to_string(),
@@ -169,7 +166,7 @@ impl Scanner {
         let value_str : String;
         match String::from_utf8(value) {
             Ok(vstr) => value_str = vstr,
-            Err(e) => return Err(String::from("A UTF-8 Error Occurred"))
+            Err(_e) => return Err(String::from("A UTF-8 Error Occurred"))
         }
 
         Ok(Token::new(ttype, value_str, (self.line_num, cnum)))
@@ -199,14 +196,16 @@ impl Scanner {
         let value_str : String;
         match String::from_utf8(value) {
             Ok(vstr) => value_str = vstr,
-            Err(e) => return Err(String::from("A UTF-8 Error Occurred"))
+            Err(_e) => return Err(String::from("A UTF-8 Error Occurred"))
         };
 
         match &value_str[..] {
-            "+" => Ok(Token::new(TokenType::OpPlus, value_str, (self.line_num, cnum))),
-            "-" => Ok(Token::new(TokenType::OpMinus, value_str, (self.line_num, cnum))),
-            "*" => Ok(Token::new(TokenType::OpMult, value_str, (self.line_num, cnum))),
+            "+" => self.make_tok(TokenType::OpPlus, value_str, cnum),
+            "-" => self.make_tok(TokenType::OpMinus, value_str, cnum),
+            "*" => self.make_tok(TokenType::OpMult, value_str, cnum),
             "/" => self.make_tok(TokenType::OpDivi, value_str, cnum),
+            "(" => self.make_tok(TokenType::LParen, value_str, cnum),
+            ")" => self.make_tok(TokenType::RParen, value_str, cnum),
             _ => {
                 let errmsg = scanner_error(
                     "Invalid operator or symbol".to_string(),

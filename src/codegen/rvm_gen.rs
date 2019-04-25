@@ -13,6 +13,7 @@ impl RvmGenerator {
 
 impl CodeGenerator for RvmGenerator {
     fn op(&mut self, opcode: &str) {
+        self.i_ptr += 1;
         match opcode {
             "OP_EXIT" => self.code.push(0x00),
             "OP_PUSH" => self.code.push(0x01),
@@ -34,5 +35,6 @@ impl CodeGenerator for RvmGenerator {
 
         let mut value_bytes = value_parsed.to_be_bytes().to_vec();
         self.code.append(&mut value_bytes);
+        self.i_ptr += dsize;
     }
 }
