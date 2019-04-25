@@ -205,6 +205,8 @@ impl Scanner {
         match &value_str[..] {
             "+" => Ok(Token::new(TokenType::OpPlus, value_str, (self.line_num, cnum))),
             "-" => Ok(Token::new(TokenType::OpMinus, value_str, (self.line_num, cnum))),
+            "*" => Ok(Token::new(TokenType::OpMult, value_str, (self.line_num, cnum))),
+            "/" => self.make_tok(TokenType::OpDivi, value_str, cnum),
             _ => {
                 let errmsg = scanner_error(
                     "Invalid operator or symbol".to_string(),
@@ -215,5 +217,9 @@ impl Scanner {
                 return Err(errmsg)
             }
         }
+    }
+
+    fn make_tok(&self, tt : TokenType, value: String, col: usize) -> Result<Token, String> {
+        Ok(Token::new(tt, value, (self.line_num, col)))
     }
 }

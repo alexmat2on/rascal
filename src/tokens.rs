@@ -17,6 +17,8 @@ impl Token {
         match self.token_type {
             TokenType::OpPlus => "OP_ADD",
             TokenType::OpMinus => "OP_SUB",
+            TokenType::OpMult => "OP_MULT",
+            TokenType::OpDivi => "OP_DIVI",
             _ => "NOP"
         }
     }
