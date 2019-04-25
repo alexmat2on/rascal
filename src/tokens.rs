@@ -12,10 +12,18 @@ impl Token {
     pub fn new(token_type: TokenType, token_value: String, src_info: (usize, usize)) -> Token {
         Token { token_type, token_value, src_info }
     }
+
+    pub fn to_op(&self) -> &str {
+        match self.token_type {
+            TokenType::OpPlus => "OP_ADD",
+            TokenType::OpMinus => "OP_SUB",
+            _ => "NOP"
+        }
+    }
 }
 
 /* Names for different types of Tokens */
-#[derive(Debug, Hash, Eq, PartialEq, Clone)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
 pub enum TokenType {
     Null,   // Only used (currently) for initializing the Scanner, might be able to remove this in the future
     Eof,

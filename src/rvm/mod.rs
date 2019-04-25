@@ -44,6 +44,10 @@ impl RvmMachine {
                     self.add();
                     self.ip += 1;
                 },
+                0x11 => {
+                    self.sub();
+                    self.ip += 1;
+                },
                 _ => {
                     println!("Uh oh... dumping...");
                     println!("{:?}", self.code);
@@ -61,6 +65,13 @@ impl RvmMachine {
         let b = self.stack.pop();
 
         self.stack.push(a + b);
+    }
+
+    fn sub(&mut self) {
+        let a = self.stack.pop();
+        let b = self.stack.pop();
+
+        self.stack.push(b - a);
     }
 }
 

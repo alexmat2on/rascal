@@ -51,10 +51,7 @@ impl Parser {
     }
 
     pub fn parse(&mut self) -> Result<(), String> {
-        self.parse_t()?;
-        self.parse_ep()?;
-        self.match_tok(TokenType::Eof)?;
-        self.gen.op("OP_EXIT");
+        self.expression()?;
         Ok(())
     }
 
@@ -76,26 +73,73 @@ impl Parser {
         }
     }
 
-    fn parse_ep(&mut self) -> Result<(), String> {
-        if self.scan.cur_token.token_type == TokenType::OpPlus {
-            let decorator = self.scan.cur_token.clone();
-            self.match_tok(TokenType::OpPlus)?;
-            self.parse_t()?;
-            self.parse_ep()?;
-            self.gen.op("OP_ADD");
-        }
+    fn expression(&mut self) -> Result<(), String> {
+        self.term()?;
+        self.expression_p()?;
+
+        self.gen.op("OP_EXIT");
         Ok(())
     }
 
-    fn parse_t(&mut self) -> Result<(), String> {
-        if self.scan.cur_token.token_type == TokenType::IntLit {
-            self.gen.op("OP_PUSH");
-            self.gen.data(self.scan.cur_token.token_value.clone(), "u32", 4);
+    fn expression_p(&mut self) -> Result<(), String> {
+        let tok = self.scan.cur_token.clone();
+        match tok.token_type {
+            TokenType::OpPlus => {
+                self.match_tok(TokenType::OpPlus)?;
+                self.term()?;
+                self.gen.op(tok.to_op());
+                self.expression_p()?;
+            },
+            TokenType::OpMinus => {
+                self.match_tok(TokenType::OpMinus)?;
+                self.term()?;
+                self.gen.op(tok.to_op());
+                self.expression_p()?;
+            },
+            _ => ()
+        };
+        Ok(())
+    }
 
-            self.match_tok(TokenType::IntLit)?;
-        } else {
-            let errmsg = parser_error("TK_INTLIT", self.scan.cur_token.clone());
-            return Err(errmsg)
+    fn term(&mut self) -> Result<(), String> {
+        self.factor()?;
+        self.term_p()?;
+        Ok(())
+    }
+
+    fn term_p(&mut self) -> Result<(), String> {
+        let tok = self.scan.cur_token.clone();
+        match tok.token_type {
+            TokenType::OpMult => {
+                self.match_tok(TokenType::OpMult)?;
+                self.factor()?;
+                self.gen.op(tok.to_op());
+                self.term_p()?;
+            },
+            TokenType::OpDivi => {
+                self.match_tok(TokenType::OpDivi)?;
+                self.factor()?;
+                self.gen.op(tok.to_op());
+                self.term_p()?;
+            },
+            _ => ()
+        };
+        Ok(())
+    }
+
+    fn factor(&mut self) -> Result<(), String> {
+        let tok = &self.scan.cur_token;
+        match tok.token_type {
+            TokenType::IntLit => {
+                self.gen.op("OP_PUSH");
+                self.gen.data(tok.token_value.clone(), "u32", 4);
+
+                self.match_tok(TokenType::IntLit)?;
+            },
+            _ => {
+                let errmsg = parser_error("TK_INTLIT", self.scan.cur_token.clone());
+                return Err(errmsg)
+            }
         }
         Ok(())
     }
