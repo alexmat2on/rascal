@@ -65,53 +65,44 @@ impl Parser {
 
     fn expression(&mut self) -> Result<(), String> {
         self.term()?;
-        self.expression_p()?;
-        Ok(())
-    }
-
-    fn expression_p(&mut self) -> Result<(), String> {
         let tok = self.scan.cur_token.clone();
-        match tok.token_type {
-            TokenType::OpPlus => {
-                self.match_tok(TokenType::OpPlus)?;
-                self.term()?;
-                self.gen.op(tok.to_op());
-                self.expression_p()?;
-            },
-            TokenType::OpMinus => {
-                self.match_tok(TokenType::OpMinus)?;
-                self.term()?;
-                self.gen.op(tok.to_op());
-                self.expression_p()?;
-            },
-            _ => ()
+        while self.scan.cur_token.token_type == TokenType::OpPlus || self.scan.cur_token.token_type == TokenType::OpMinus {
+            match self.scan.cur_token.token_type {
+                TokenType::OpPlus => {
+                    self.match_tok(self.scan.cur_token.token_type)?;
+                    self.term()?;
+                    self.gen.op(tok.to_op());
+                },
+                TokenType::OpMinus => {
+                    self.match_tok(self.scan.cur_token.token_type)?;
+                    self.term()?;
+                    self.gen.op(tok.to_op());
+                },
+                _ => ()
+            }
         };
         Ok(())
     }
 
     fn term(&mut self) -> Result<(), String> {
         self.factor()?;
-        self.term_p()?;
-        Ok(())
-    }
-
-    fn term_p(&mut self) -> Result<(), String> {
         let tok = self.scan.cur_token.clone();
-        match tok.token_type {
-            TokenType::OpMult => {
-                self.match_tok(TokenType::OpMult)?;
-                self.factor()?;
-                self.gen.op(tok.to_op());
-                self.term_p()?;
-            },
-            TokenType::OpDivi => {
-                self.match_tok(TokenType::OpDivi)?;
-                self.factor()?;
-                self.gen.op(tok.to_op());
-                self.term_p()?;
-            },
-            _ => ()
+        while self.scan.cur_token.token_type == TokenType::OpMult || self.scan.cur_token.token_type == TokenType::OpDivi {
+            match tok.token_type {
+                TokenType::OpMult => {
+                    self.match_tok(TokenType::OpMult)?;
+                    self.factor()?;
+                    self.gen.op(tok.to_op());
+                },
+                TokenType::OpDivi => {
+                    self.match_tok(TokenType::OpDivi)?;
+                    self.factor()?;
+                    self.gen.op(tok.to_op());
+                },
+                _ => ()
+            };
         };
+
         Ok(())
     }
 
@@ -133,7 +124,8 @@ impl Parser {
                 let errmsg = parser_error("TK_INTLIT", self.scan.cur_token.clone());
                 return Err(errmsg)
             }
-        }
+        };
+
         Ok(())
     }
 }

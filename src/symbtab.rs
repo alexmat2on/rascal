@@ -1,9 +1,12 @@
 use std::collections::HashMap;
-
 use crate::tokens::TokenType;
 
-pub struct SymbTab<T, U> {
-    pub table: HashMap<T, U>
+pub struct SymbTab {
+    pub table: HashMap<String, SymbEntry>
+}
+
+pub struct SymbEntry {
+    tokentype: TokenType,
 }
 
 impl SymbTab<String, TokenType> {

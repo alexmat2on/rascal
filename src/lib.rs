@@ -37,7 +37,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
     parser.parse()?;
 
-    println!("The generated code is: {:?}", parser.gen.code);
+    println!("The generated code is: {:02x?}", &parser.gen.code[..]);
 
     let mut rvm = RvmMachine::new(parser.gen.code);
     rvm.exec();

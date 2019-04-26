@@ -58,9 +58,16 @@ pub enum TokenType {
 impl TokenType {
     pub fn to_str(&self) -> &str {
         match *self {
-            TokenType::IntLit => "TK_INTLIT",
-            TokenType::OpPlus => "TK_OPPLUS",
+            TokenType::Null => "TK_NULL",
             TokenType::Eof => "TK_EOF",
+            TokenType::OpPlus => "TK_OPPLUS",
+            TokenType::OpMinus => "TK_OPMINUS",
+            TokenType::OpMult => "TK_MULT",
+            TokenType::OpDivi => "TK_DIVI",
+            TokenType::IntLit => "TK_INTLIT",
+            TokenType::LParen => "TK_LPAREN",
+            TokenType::RParen => "TK_RPAREN",
+            TokenType::Semi => "TK_SEMICOL",
             _ => "OTHER"
         }
     }
