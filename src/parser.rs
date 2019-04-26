@@ -65,18 +65,20 @@ impl Parser {
 
     fn expression(&mut self) -> Result<(), String> {
         self.term()?;
-        let tok = self.scan.cur_token.clone();
-        while self.scan.cur_token.token_type == TokenType::OpPlus || self.scan.cur_token.token_type == TokenType::OpMinus {
+        while (
+            self.scan.cur_token.token_type == TokenType::OpPlus ||
+            self.scan.cur_token.token_type == TokenType::OpMinus
+        ) {
             match self.scan.cur_token.token_type {
                 TokenType::OpPlus => {
                     self.match_tok(self.scan.cur_token.token_type)?;
                     self.term()?;
-                    self.gen.op(tok.to_op());
+                    self.gen.op("OP_ADD");
                 },
                 TokenType::OpMinus => {
                     self.match_tok(self.scan.cur_token.token_type)?;
                     self.term()?;
-                    self.gen.op(tok.to_op());
+                    self.gen.op("OP_SUB");
                 },
                 _ => ()
             }
@@ -87,17 +89,20 @@ impl Parser {
     fn term(&mut self) -> Result<(), String> {
         self.factor()?;
         let tok = self.scan.cur_token.clone();
-        while self.scan.cur_token.token_type == TokenType::OpMult || self.scan.cur_token.token_type == TokenType::OpDivi {
+        while (
+            self.scan.cur_token.token_type == TokenType::OpMult ||
+            self.scan.cur_token.token_type == TokenType::OpDivi
+        ) {
             match tok.token_type {
                 TokenType::OpMult => {
                     self.match_tok(TokenType::OpMult)?;
                     self.factor()?;
-                    self.gen.op(tok.to_op());
+                    self.gen.op("OP_MULT");
                 },
                 TokenType::OpDivi => {
                     self.match_tok(TokenType::OpDivi)?;
                     self.factor()?;
-                    self.gen.op(tok.to_op());
+                    self.gen.op("OP_DIVI");
                 },
                 _ => ()
             };

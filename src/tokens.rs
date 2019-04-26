@@ -60,8 +60,8 @@ impl TokenType {
         match *self {
             TokenType::Null => "TK_NULL",
             TokenType::Eof => "TK_EOF",
-            TokenType::OpPlus => "TK_OPPLUS",
-            TokenType::OpMinus => "TK_OPMINUS",
+            TokenType::OpPlus => "TK_PLUS",
+            TokenType::OpMinus => "TK_MINUS",
             TokenType::OpMult => "TK_MULT",
             TokenType::OpDivi => "TK_DIVI",
             TokenType::IntLit => "TK_INTLIT",
