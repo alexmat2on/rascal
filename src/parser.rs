@@ -14,7 +14,6 @@
 *       F  -> (E) | lit | id | +F | -F
 */
 use crate::errors::parser_error;
-// use crate::tokens::Token;
 use crate::tokens::TokenType;
 use crate::scanner::Scanner;
 
@@ -40,11 +39,13 @@ impl Parser {
     }
 
     pub fn parse(&mut self) -> Result<(), String> {
-        self.expression()?;
+        self.program()?;
+        self.match_tok(TokenType::Eof)?;
         self.gen.op("OP_EXIT");
         Ok(())
     }
 
+    // === HELPERS ================================================================================
     fn check_tok(&mut self, tok: TokenType) -> Result<(), String> {
         if tok != self.scan.cur_token.token_type {
             let errmsg = parser_error(tok.to_str(), self.scan.cur_token.clone());
@@ -61,6 +62,15 @@ impl Parser {
             Ok(()) => Ok(()),
             Err(e) => Err(e)
         }
+    }
+
+    // === GRAMMAR PRODUCTIONS ====================================================================
+    fn program(&mut self) -> Result<(), String> {
+        self.match_tok(TokenType::Begin)?;
+        self.expression()?;
+        self.match_tok(TokenType::End)?;
+
+        Ok(())
     }
 
     fn expression(&mut self) -> Result<(), String> {
@@ -88,12 +98,11 @@ impl Parser {
 
     fn term(&mut self) -> Result<(), String> {
         self.factor()?;
-        let tok = self.scan.cur_token.clone();
         while (
             self.scan.cur_token.token_type == TokenType::OpMult ||
             self.scan.cur_token.token_type == TokenType::OpDivi
         ) {
-            match tok.token_type {
+            match self.scan.cur_token.token_type {
                 TokenType::OpMult => {
                     self.match_tok(TokenType::OpMult)?;
                     self.factor()?;
@@ -120,13 +129,19 @@ impl Parser {
 
                 self.match_tok(TokenType::IntLit)?;
             },
+            TokenType::Ident => {
+                self.gen.op("OP_PUSH");
+                self.gen.data("0".to_string(), "u32", 4);
+
+                self.match_tok(TokenType::Ident)?;
+            },
             TokenType::LParen => {
                 self.match_tok(TokenType::LParen)?;
                 self.expression()?;
                 self.match_tok(TokenType::RParen)?;
             },
             _ => {
-                let errmsg = parser_error("TK_INTLIT", self.scan.cur_token.clone());
+                let errmsg = parser_error("TK_INTLIT, TK_IDENT, or TK_LPAREN", self.scan.cur_token.clone());
                 return Err(errmsg)
             }
         };

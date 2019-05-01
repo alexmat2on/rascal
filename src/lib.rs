@@ -4,7 +4,7 @@
  */
 mod errors;
 mod tokens;
-// mod symbtab;
+mod symbtab;
 mod scanner;
 mod parser;
 mod codegen;

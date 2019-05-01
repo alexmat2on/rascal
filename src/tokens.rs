@@ -32,23 +32,23 @@ pub enum TokenType {
     Null,   // Only used (currently) for initializing the Scanner, might be able to remove this in the future
     Eof,
 
-    // Keywords
-    // Begin,
-    // End,
+    //** Keywords
+    Begin,
+    End,
 
-    // Operators
+    //** Operators
     OpPlus,
     OpMult,
     OpMinus,
     OpDivi,
     OpAssign,
 
-    // Constants
+    //** Constants
     IntLit,
     RealLit,
     // StrLit,
 
-    // Other
+    //** Other
     Ident,
     LParen,
     RParen,
@@ -60,11 +60,15 @@ impl TokenType {
         match *self {
             TokenType::Null => "TK_NULL",
             TokenType::Eof => "TK_EOF",
+            TokenType::Begin => "TK_BEGIN",
+            TokenType::End => "TK_END",
             TokenType::OpPlus => "TK_PLUS",
             TokenType::OpMinus => "TK_MINUS",
             TokenType::OpMult => "TK_MULT",
             TokenType::OpDivi => "TK_DIVI",
             TokenType::IntLit => "TK_INTLIT",
+            TokenType::RealLit => "TK_REALLIT",
+            TokenType::Ident => "TK_IDENT",
             TokenType::LParen => "TK_LPAREN",
             TokenType::RParen => "TK_RPAREN",
             TokenType::Semi => "TK_SEMICOL",
@@ -147,13 +151,13 @@ pub fn get_char_group(value: u8) -> CharGroup {
         CharGroup::WHITE,  // 30   RECORD SEPARATOR
         CharGroup::WHITE,  // 31   UNIT SEPARATOR
         CharGroup::WHITE,  // 32   SPACE
-        CharGroup::PUNCT,  // 33   !
-        CharGroup::PUNCT,  // 34   "
-        CharGroup::PUNCT,  // 35   #
+        CharGroup::INVLD,  // 33   !
+        CharGroup::INVLD,  // 34   "
+        CharGroup::INVLD,  // 35   #
         CharGroup::INVLD,  // 36   $
-        CharGroup::PUNCT,  // 37   %
-        CharGroup::PUNCT,  // 38   &
-        CharGroup::PUNCT,  // 39   '
+        CharGroup::INVLD,  // 37   %
+        CharGroup::INVLD,  // 38   &
+        CharGroup::INVLD,  // 39   '
         CharGroup::PUNCT,  // 40   (
         CharGroup::PUNCT,  // 41   )
         CharGroup::PUNCT,  // 42   *
@@ -177,8 +181,8 @@ pub fn get_char_group(value: u8) -> CharGroup {
         CharGroup::PUNCT,  // 60   <
         CharGroup::PUNCT,  // 61   =
         CharGroup::PUNCT,  // 62   >
-        CharGroup::PUNCT,  // 63   ?
-        CharGroup::PUNCT,  // 64   @
+        CharGroup::INVLD,  // 63   ?
+        CharGroup::INVLD,  // 64   @
         CharGroup::ALPHA,  // 65   A
         CharGroup::ALPHA,  // 66   B
         CharGroup::ALPHA,  // 67   C
@@ -206,10 +210,10 @@ pub fn get_char_group(value: u8) -> CharGroup {
         CharGroup::ALPHA,  // 89   Y
         CharGroup::ALPHA,  // 90   Z
         CharGroup::PUNCT,  // 91   [
-        CharGroup::PUNCT,  // 92   \
+        CharGroup::INVLD,  // 92   \
         CharGroup::PUNCT,  // 93   ]
-        CharGroup::PUNCT,  // 94   ^
-        CharGroup::PUNCT,  // 95   _
+        CharGroup::INVLD,  // 94   ^
+        CharGroup::INVLD,  // 95   _
         CharGroup::PUNCT,  // 96   `
         CharGroup::ALPHA,  // 97   a
         CharGroup::ALPHA,  // 98   b
@@ -238,9 +242,9 @@ pub fn get_char_group(value: u8) -> CharGroup {
         CharGroup::ALPHA,  // 121  y
         CharGroup::ALPHA,  // 122  z
         CharGroup::PUNCT,  // 123  {
-        CharGroup::PUNCT,  // 124  |
+        CharGroup::INVLD,  // 124  |
         CharGroup::PUNCT,  // 125  }
-        CharGroup::PUNCT,  // 126  ~
+        CharGroup::INVLD,  // 126  ~
         CharGroup::INVLD,  // 127  DEL
     ];
 

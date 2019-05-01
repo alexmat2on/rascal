@@ -15,7 +15,9 @@ use crate::tokens;
 use crate::tokens::Token;
 use crate::tokens::TokenType;
 use crate::tokens::CharGroup;
-// use crate::symtab::SymbTab;
+
+use crate::symbtab::SymbTab;
+use crate::symbtab::SymbEntry;
 
 pub struct Scanner {
     src_code: Vec<u8>,
@@ -23,7 +25,8 @@ pub struct Scanner {
     scan_ptr: usize,
     pub cur_token: Token,
     pub line_num: usize,
-    pub col_num: usize
+    pub col_num: usize,
+    pub symbol_table: SymbTab
 }
 
 fn load_buffer(filename: &String) -> Result<(Vec<u8>, usize), String> {
@@ -47,14 +50,16 @@ fn load_buffer(filename: &String) -> Result<(Vec<u8>, usize), String> {
 impl Scanner {
     pub fn new(filename : &String) -> Result<Scanner, String> {
         let src_load = load_buffer(filename)?;
+        let cur_token = Token::new(TokenType::Null, String::from(""), (0, 0));
 
         let mut res = Scanner {
             src_code: src_load.0,
             src_length: src_load.1,
             scan_ptr: 0,
-            cur_token: Token::new(TokenType::Null, String::from(""), (0, 0)),
+            cur_token: cur_token.clone(),
             line_num: 1,
-            col_num: 1
+            col_num: 1,
+            symbol_table: SymbTab::new(vec![cur_token])
         };
 
         res.get_token()?;
@@ -67,7 +72,6 @@ impl Scanner {
             let errmsg = format!("Err: Empty source file.");
             return Err(errmsg.to_string())
         };
-
 
         let maybe_eof = self.check_eof();
         self.cur_token = match maybe_eof {
@@ -155,7 +159,7 @@ impl Scanner {
                     } else {
                         break;
                     }
-                }
+                },
                 _ => break,
             }
 
@@ -172,8 +176,39 @@ impl Scanner {
         Ok(Token::new(ttype, value_str, (self.line_num, cnum)))
     }
 
-    fn get_identifier(&self) -> Result<Token, String> {
-        Ok(Token::new(TokenType::Null, String::from(""), (0, 0)))
+    fn get_identifier(&mut self) -> Result<Token, String> {
+        let mut value = vec![];
+        let mut ttype = TokenType::Ident;
+        let cnum = self.col_num.clone();
+
+        loop {
+            let char = self.get_char();
+            let char_g = tokens::get_char_group(char);
+
+            match char_g {
+                CharGroup::ALPHA => value.push(char),
+                CharGroup::DIGIT => value.push(char),
+                _ => break,
+            }
+
+            self.scan_ptr += 1;
+            self.col_num += 1;
+        }
+
+        let value_str : String;
+        match String::from_utf8(value) {
+            Ok(vstr) => value_str = vstr,
+            Err(_e) => return Err(String::from("A UTF-8 Error Occurred"))
+        }
+
+        let ident_token = match &value_str[..] {
+            "begin" => self.make_tok(TokenType::Begin, value_str, cnum),
+            "end" => self.make_tok(TokenType::End, value_str, cnum),
+            _ => self.make_tok(TokenType::Ident, value_str, cnum),
+        };
+
+        self.symbol_table.add(ident_token.clone().unwrap());
+        ident_token
     }
 
     fn get_symb(&mut self) -> Result<Token, String> {
