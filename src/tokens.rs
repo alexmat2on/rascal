@@ -21,6 +21,7 @@ impl Token {
             TokenType::OpMinus => "OP_SUB",
             TokenType::OpMult => "OP_MULT",
             TokenType::OpDivi => "OP_DIVI",
+            TokenType::OpAssign => "OP_ASSIGN",
             _ => "NOP"
         }
     }
@@ -35,6 +36,7 @@ pub enum TokenType {
     //** Keywords
     Begin,
     End,
+    Var,
 
     //** Operators
     OpPlus,
@@ -62,10 +64,12 @@ impl TokenType {
             TokenType::Eof => "TK_EOF",
             TokenType::Begin => "TK_BEGIN",
             TokenType::End => "TK_END",
+            TokenType::Var => "TK_VAR",
             TokenType::OpPlus => "TK_PLUS",
             TokenType::OpMinus => "TK_MINUS",
             TokenType::OpMult => "TK_MULT",
             TokenType::OpDivi => "TK_DIVI",
+            TokenType::OpAssign => "TK_ASSIGN",
             TokenType::IntLit => "TK_INTLIT",
             TokenType::RealLit => "TK_REALLIT",
             TokenType::Ident => "TK_IDENT",
@@ -79,11 +83,7 @@ impl TokenType {
 
 impl fmt::Display for TokenType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            TokenType::IntLit => write!(f, "TK_INTLIT"),
-            TokenType::OpPlus => write!(f, "TK_OPPLUS"),
-            _ => write!(f, "OTHER")
-        }
+        write!(f, "{}", self.to_str())
     }
 }
 

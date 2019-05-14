@@ -30,11 +30,11 @@ impl SymbTab {
         self.table.insert(tok.token_value, SymbEntry::new(tok.token_type));
     }
 
-    pub fn get(&self, key: &String) -> &SymbEntry {
-        self.table.get(key).expect("Invalid symbol key.")
-    }
-
-    pub fn overwrite(&mut self, key: String, new_val: SymbEntry) {
-
-    }
+    // pub fn get(&self, key: &String) -> &SymbEntry {
+    //     self.table.get(key).expect("Invalid symbol key.")
+    // }
+    //
+    // pub fn overwrite(&mut self, key: String, new_val: SymbEntry) {
+    //
+    // }
 }

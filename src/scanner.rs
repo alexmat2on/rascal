@@ -204,6 +204,7 @@ impl Scanner {
         let ident_token = match &value_str[..] {
             "begin" => self.make_tok(TokenType::Begin, value_str, cnum),
             "end" => self.make_tok(TokenType::End, value_str, cnum),
+            "var" => self.make_tok(TokenType::Var, value_str, cnum),
             _ => self.make_tok(TokenType::Ident, value_str, cnum),
         };
 
@@ -235,12 +236,14 @@ impl Scanner {
         };
 
         match &value_str[..] {
+            ":=" => self.make_tok(TokenType::OpAssign, value_str, cnum),
             "+" => self.make_tok(TokenType::OpPlus, value_str, cnum),
             "-" => self.make_tok(TokenType::OpMinus, value_str, cnum),
             "*" => self.make_tok(TokenType::OpMult, value_str, cnum),
             "/" => self.make_tok(TokenType::OpDivi, value_str, cnum),
             "(" => self.make_tok(TokenType::LParen, value_str, cnum),
             ")" => self.make_tok(TokenType::RParen, value_str, cnum),
+            ";" => self.make_tok(TokenType::Semi, value_str, cnum),
             _ => {
                 let errmsg = scanner_error(
                     "Invalid operator or symbol".to_string(),

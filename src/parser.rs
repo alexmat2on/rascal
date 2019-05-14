@@ -4,6 +4,11 @@
 * The Parser -- implemented as an LL(1) / top-down recursive descent parser --
 * will read a token and apply a grammar production rule to it.
 *
+* The language grammar specification
+*       <prog> -> begin <stat> end
+*       <stat> -> <stat-decl>; | <expr>;
+*       <stat-decl> -> var id
+*
 * The expression grammer specification (removing instances of immediate left recursion) is as follows:
 *       E  -> TE'
 *       E' -> +TE' | -TE' | NULL
@@ -67,18 +72,41 @@ impl Parser {
     // === GRAMMAR PRODUCTIONS ====================================================================
     fn program(&mut self) -> Result<(), String> {
         self.match_tok(TokenType::Begin)?;
-        self.expression()?;
+        while self.check_tok(TokenType::End).is_err() {
+            self.stat()?;
+        }
         self.match_tok(TokenType::End)?;
 
         Ok(())
     }
 
+    fn stat(&mut self) -> Result<(), String> {
+        if self.stat_assign().is_err() {
+            self.expression()?;
+        }
+        self.match_tok(TokenType::Semi)?;
+        Ok(())
+    }
+
+    fn stat_assign(&mut self) -> Result<(), String> {
+        self.match_tok(TokenType::Ident)?;
+        self.match_tok(TokenType::OpAssign)?;
+        self.expression()?;
+        Ok(())
+    }
+
+    fn stat_decl(&mut self) -> Result<(), String> {
+        self.match_tok(TokenType::Var)?;
+        self.match_tok(TokenType::Ident)?;
+        Ok(())
+    }
+
     fn expression(&mut self) -> Result<(), String> {
         self.term()?;
-        while (
-            self.scan.cur_token.token_type == TokenType::OpPlus ||
-            self.scan.cur_token.token_type == TokenType::OpMinus
-        ) {
+        while
+        self.check_tok(TokenType::OpPlus).is_ok() ||
+        self.check_tok(TokenType::OpMinus).is_ok()
+        {
             match self.scan.cur_token.token_type {
                 TokenType::OpPlus => {
                     self.match_tok(self.scan.cur_token.token_type)?;
@@ -98,10 +126,10 @@ impl Parser {
 
     fn term(&mut self) -> Result<(), String> {
         self.factor()?;
-        while (
-            self.scan.cur_token.token_type == TokenType::OpMult ||
-            self.scan.cur_token.token_type == TokenType::OpDivi
-        ) {
+        while
+        self.check_tok(TokenType::OpMult).is_ok() ||
+        self.check_tok(TokenType::OpDivi).is_ok()
+        {
             match self.scan.cur_token.token_type {
                 TokenType::OpMult => {
                     self.match_tok(TokenType::OpMult)?;
