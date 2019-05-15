@@ -76,7 +76,7 @@ impl Parser {
             self.stat()?;
         }
         self.match_tok(TokenType::End)?;
-
+        self.match_tok(TokenType::Dot)?;
         Ok(())
     }
 
@@ -90,8 +90,13 @@ impl Parser {
 
     fn stat_assign(&mut self) -> Result<(), String> {
         self.match_tok(TokenType::Ident)?;
+        self.gen.op("OP_PUSH");
+        // TO-DO: Not hardcode "x"'s DATA address!
+        self.gen.data("0".to_string(), "u32", 4);
+
         self.match_tok(TokenType::OpAssign)?;
         self.expression()?;
+        self.gen.op("OP_STORE");
         Ok(())
     }
 
@@ -160,6 +165,7 @@ impl Parser {
             TokenType::Ident => {
                 self.gen.op("OP_PUSH");
                 self.gen.data("0".to_string(), "u32", 4);
+                self.gen.op("OP_LOAD");
 
                 self.match_tok(TokenType::Ident)?;
             },

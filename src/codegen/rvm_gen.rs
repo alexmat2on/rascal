@@ -18,6 +18,8 @@ impl CodeGenerator for RvmGenerator {
             "OP_EXIT" => self.code.push(0x00),
             "OP_PUSH" => self.code.push(0x01),
             "OP_POP" => self.code.push(0x02),
+            "OP_STORE" => self.code.push(0x03),
+            "OP_LOAD" => self.code.push(0x04),
             "OP_ADD" => self.code.push(0x10),
             "OP_SUB" => self.code.push(0x11),
             "OP_MULT" => self.code.push(0x12),

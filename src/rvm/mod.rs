@@ -4,6 +4,8 @@
 ///     0x00 -> Terminate execution
 ///     0x01 -> Push x bytes onto stack
 ///     0x02 -> Pop x bytes from stack
+///     0x03 -> Store: Store value at [sp] into DATA address given by [sp - 1]
+///     0x04 -> Load: Push value from DATA[stack[sp]] onto stack.
 ///     0x10 -> Add two values from stack
 ///     0x11 -> Subtract
 ///
@@ -23,7 +25,7 @@ impl RvmMachine {
     pub fn new(code: Vec<u8>) -> RvmMachine {
         RvmMachine {
             code: code,
-            data: vec![0],
+            data: vec![0; 256],
             stack: RvmStack::new(0, 256),
             ip: 0,
             sp: 0
@@ -43,6 +45,14 @@ impl RvmMachine {
                     self.ip += 5;
                 },
                 0x02 => self.sp -= 1,
+                0x03 => {
+                    self.store();
+                    self.ip += 1;
+                },
+                0x04 => {
+                    self.load();
+                    self.ip += 1;
+                },
                 0x10 => {
                     self.do_op(|a, b| a + b);
                     self.ip += 1;
@@ -82,8 +92,31 @@ impl RvmMachine {
         self.stack.push(result[2]);
         self.stack.push(result[3]);
     }
+
+    fn store(&mut self) {
+        let value = read_be_u32(&mut self.stack.pop(4));
+        let val_bytes = value.to_be_bytes();
+
+        let address = read_be_u32(&mut self.stack.pop(4));
+
+        self.data[address as usize] = val_bytes[0];
+        self.data[(address + 1) as usize] = val_bytes[1];
+        self.data[(address + 2) as usize] = val_bytes[2];
+        self.data[(address + 3) as usize] = val_bytes[3];
+    }
+
+    fn load(&mut self) {
+        let address = read_be_u32(&mut self.stack.pop(4));
+        let addr = address.to_be_bytes();
+
+        self.stack.push(self.data[address as usize]);
+        self.stack.push(self.data[(address + 1) as usize]);
+        self.stack.push(self.data[(address + 2) as usize]);
+        self.stack.push(self.data[(address + 3) as usize]);
+    }
 }
 
+#[derive(Clone)]
 struct RvmStack<T> {
     stack: Vec<T>,
     pub sp: usize

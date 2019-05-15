@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use crate::tokens::Token;
 use crate::tokens::TokenType;
 
+#[derive(Debug)]
 pub struct SymbEntry {
     tokentype: TokenType,
 }
@@ -12,6 +13,7 @@ impl SymbEntry {
     }
 }
 
+#[derive(Debug)]
 pub struct SymbTab {
     pub table: HashMap<String, SymbEntry>
 }

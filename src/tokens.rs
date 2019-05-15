@@ -55,6 +55,7 @@ pub enum TokenType {
     LParen,
     RParen,
     Semi,
+    Dot,
 }
 
 impl TokenType {
@@ -76,6 +77,7 @@ impl TokenType {
             TokenType::LParen => "TK_LPAREN",
             TokenType::RParen => "TK_RPAREN",
             TokenType::Semi => "TK_SEMICOL",
+            TokenType::Dot => "TK_DOT",
             _ => "OTHER"
         }
     }

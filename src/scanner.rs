@@ -244,6 +244,7 @@ impl Scanner {
             "(" => self.make_tok(TokenType::LParen, value_str, cnum),
             ")" => self.make_tok(TokenType::RParen, value_str, cnum),
             ";" => self.make_tok(TokenType::Semi, value_str, cnum),
+            "." => self.make_tok(TokenType::Dot, value_str, cnum),
             _ => {
                 let errmsg = scanner_error(
                     "Invalid operator or symbol".to_string(),
