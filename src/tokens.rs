@@ -55,6 +55,7 @@ pub enum TokenType {
     LParen,
     RParen,
     Semi,
+    Comma,
     Dot,
 }
 
@@ -77,6 +78,7 @@ impl TokenType {
             TokenType::LParen => "TK_LPAREN",
             TokenType::RParen => "TK_RPAREN",
             TokenType::Semi => "TK_SEMICOL",
+            TokenType::Comma => "TK_COMMA",
             TokenType::Dot => "TK_DOT",
             _ => "OTHER"
         }
@@ -97,7 +99,6 @@ pub enum CharGroup {
     PUNCT,
     DIGIT,
     ALPHA,
-    QUOTE,
 }
 
 impl fmt::Display for CharGroup {
@@ -108,7 +109,6 @@ impl fmt::Display for CharGroup {
             CharGroup::PUNCT => write!(f, "PUNCT"),
             CharGroup::DIGIT => write!(f, "DIGIT"),
             CharGroup::ALPHA => write!(f, "ALPHA"),
-            CharGroup::QUOTE => write!(f, "QUOTE"),
         }
     }
 }

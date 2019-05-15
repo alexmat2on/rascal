@@ -5,6 +5,8 @@
 * will read a token and apply a grammar production rule to it.
 *
 * The language grammar specification
+*       <S> -> <decl> <prog> EOF
+*       <decl> -> <stat-decl>;
 *       <prog> -> begin <stat> end
 *       <stat> -> <stat-decl>; | <expr>;
 *       <stat-decl> -> var id
@@ -44,6 +46,7 @@ impl Parser {
     }
 
     pub fn parse(&mut self) -> Result<(), String> {
+        self.declar()?;
         self.program()?;
         self.match_tok(TokenType::Eof)?;
         self.gen.op("OP_EXIT");
@@ -70,6 +73,13 @@ impl Parser {
     }
 
     // === GRAMMAR PRODUCTIONS ====================================================================
+    fn declar(&mut self) -> Result<(), String> {
+        self.stat_decl()?;
+        self.match_tok(TokenType::Semi)?;
+
+        Ok(())
+    }
+
     fn program(&mut self) -> Result<(), String> {
         self.match_tok(TokenType::Begin)?;
         while self.check_tok(TokenType::End).is_err() {
@@ -93,19 +103,7 @@ impl Parser {
         self.match_tok(TokenType::Ident)?;
         self.gen.op("OP_PUSH");
 
-        // Look up token in SYMBTAB.
-        // If it exists, fetch its address from its entry.
-        let tok_addr = self.scan.symbol_table.get_addr(&cur_token);
-        let addr_val : u32;
-        // If address is undefined, increment some global DATA counter += dsize (data size, aka 4 bytes).
-        if tok_addr.is_none() {
-            addr_val = self.gen.data_addr;
-            self.scan.symbol_table.set_addr(&cur_token, addr_val);
-            self.gen.data_addr += 4;
-        } else {
-            addr_val = tok_addr.unwrap();
-        }
-        // Set symbol entry
+        let addr_val = self.scan.symbol_table.get_addr(&cur_token).expect("ERR: Undeclared variable!");
         self.gen.data(addr_val.to_string(), "u32", 4);
 
         self.match_tok(TokenType::OpAssign)?;
@@ -116,7 +114,25 @@ impl Parser {
 
     fn stat_decl(&mut self) -> Result<(), String> {
         self.match_tok(TokenType::Var)?;
+
+        let cur_token = self.scan.cur_token.clone();
         self.match_tok(TokenType::Ident)?;
+
+        let addr_val = self.gen.data_addr;
+        self.scan.symbol_table.set_addr(&cur_token, addr_val);
+        self.gen.data_addr += 4;
+
+        while self.check_tok(TokenType::Semi).is_err() {
+            self.match_tok(TokenType::Comma)?;
+
+            let cur_token = self.scan.cur_token.clone();
+            self.match_tok(TokenType::Ident)?;
+
+            let addr_val = self.gen.data_addr;
+            self.scan.symbol_table.set_addr(&cur_token, addr_val);
+            self.gen.data_addr += 4;
+        }
+
         Ok(())
     }
 
@@ -171,18 +187,28 @@ impl Parser {
         let tok = &self.scan.cur_token;
         match tok.token_type {
             TokenType::IntLit => {
+                // Push immediate the integer literal onto the stack.
                 self.gen.op("OP_PUSH");
                 self.gen.data(tok.token_value.clone(), "u32", 4);
 
                 self.match_tok(TokenType::IntLit)?;
             },
             TokenType::Ident => {
+                // Push immediate the address for the variable onto the stack.
                 self.gen.op("OP_PUSH");
                 let tok_addr = self.scan.symbol_table.get_addr(&tok).expect("ERR: Variable is undeclared!");
                 self.gen.data(tok_addr.to_string(), "u32", 4);
+
+                // Add the LOAD operation which takes the top of the stack and puts it into address
+                // at DATA segment.
                 self.gen.op("OP_LOAD");
 
                 self.match_tok(TokenType::Ident)?;
+            },
+            TokenType::OpMinus => {
+                self.match_tok(TokenType::OpMinus)?;
+                self.factor()?;
+                self.gen.op("OP_NEG");
             },
             TokenType::LParen => {
                 self.match_tok(TokenType::LParen)?;
@@ -190,7 +216,7 @@ impl Parser {
                 self.match_tok(TokenType::RParen)?;
             },
             _ => {
-                let errmsg = parser_error("TK_INTLIT, TK_IDENT, or TK_LPAREN", self.scan.cur_token.clone());
+                let errmsg = parser_error("TK_INTLIT, TK_IDENT, TK_MINUS, or TK_LPAREN", self.scan.cur_token.clone());
                 return Err(errmsg)
             }
         };

@@ -34,6 +34,14 @@ impl SymbTab {
         self.table.entry(tok.token_value).or_insert(SymbEntry::new(tok.token_type));
     }
 
+    pub fn set_entry(&mut self, tok: &Token, new: &Token) {
+        let current = self.table.get(&tok.token_value.clone()).unwrap();
+        let mut updated = SymbEntry::new(new.token_type);
+        updated.address = current.address.clone();
+
+        self.table.insert(tok.token_value.clone(), updated);
+    }
+
     pub fn set_addr(&mut self, tok: &Token, addr: u32) {
         let default = SymbEntry::new(tok.token_type);
         let mut updated = SymbEntry::new(tok.token_type);

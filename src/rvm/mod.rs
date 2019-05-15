@@ -2,7 +2,7 @@
 ///
 /// Instruction Set:
 ///     0x00 -> Terminate execution
-///     0x01 -> Push x bytes onto stack
+///     0x01 -> Push 4 bytes onto stack
 ///     0x02 -> Pop x bytes from stack
 ///     0x03 -> Store: Store value at [sp] into DATA address given by [sp - 1]
 ///     0x04 -> Load: Push value from DATA[stack[sp]] onto stack.
@@ -107,7 +107,6 @@ impl RvmMachine {
 
     fn load(&mut self) {
         let address = read_be_u32(&mut self.stack.pop(4));
-        let addr = address.to_be_bytes();
 
         self.stack.push(self.data[address as usize]);
         self.stack.push(self.data[(address + 1) as usize]);

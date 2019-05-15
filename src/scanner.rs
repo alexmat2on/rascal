@@ -17,7 +17,6 @@ use crate::tokens::TokenType;
 use crate::tokens::CharGroup;
 
 use crate::symbtab::SymbTab;
-use crate::symbtab::SymbEntry;
 
 pub struct Scanner {
     src_code: Vec<u8>,
@@ -178,7 +177,6 @@ impl Scanner {
 
     fn get_identifier(&mut self) -> Result<Token, String> {
         let mut value = vec![];
-        let mut ttype = TokenType::Ident;
         let cnum = self.col_num.clone();
 
         loop {
@@ -244,6 +242,7 @@ impl Scanner {
             "(" => self.make_tok(TokenType::LParen, value_str, cnum),
             ")" => self.make_tok(TokenType::RParen, value_str, cnum),
             ";" => self.make_tok(TokenType::Semi, value_str, cnum),
+            "," => self.make_tok(TokenType::Comma, value_str, cnum),
             "." => self.make_tok(TokenType::Dot, value_str, cnum),
             _ => {
                 let errmsg = scanner_error(
