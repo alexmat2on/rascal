@@ -2,12 +2,13 @@ use super::CodeGenerator;
 
 pub struct RvmGenerator {
     i_ptr: usize,
+    pub data_addr: u32,
     pub code: Vec<u8>,
 }
 
 impl RvmGenerator {
     pub fn new() -> RvmGenerator {
-        RvmGenerator { i_ptr : 0, code: vec![] }
+        RvmGenerator { i_ptr : 0, data_addr: 0, code: vec![] }
     }
 }
 

@@ -89,10 +89,24 @@ impl Parser {
     }
 
     fn stat_assign(&mut self) -> Result<(), String> {
+        let cur_token = self.scan.cur_token.clone();    // Copy this for later
         self.match_tok(TokenType::Ident)?;
         self.gen.op("OP_PUSH");
-        // TO-DO: Not hardcode "x"'s DATA address!
-        self.gen.data("0".to_string(), "u32", 4);
+
+        // Look up token in SYMBTAB.
+        // If it exists, fetch its address from its entry.
+        let tok_addr = self.scan.symbol_table.get_addr(&cur_token);
+        let addr_val : u32;
+        // If address is undefined, increment some global DATA counter += dsize (data size, aka 4 bytes).
+        if tok_addr.is_none() {
+            addr_val = self.gen.data_addr;
+            self.scan.symbol_table.set_addr(&cur_token, addr_val);
+            self.gen.data_addr += 4;
+        } else {
+            addr_val = tok_addr.unwrap();
+        }
+        // Set symbol entry
+        self.gen.data(addr_val.to_string(), "u32", 4);
 
         self.match_tok(TokenType::OpAssign)?;
         self.expression()?;
@@ -164,7 +178,8 @@ impl Parser {
             },
             TokenType::Ident => {
                 self.gen.op("OP_PUSH");
-                self.gen.data("0".to_string(), "u32", 4);
+                let tok_addr = self.scan.symbol_table.get_addr(&tok).expect("ERR: Variable is undeclared!");
+                self.gen.data(tok_addr.to_string(), "u32", 4);
                 self.gen.op("OP_LOAD");
 
                 self.match_tok(TokenType::Ident)?;

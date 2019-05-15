@@ -4,12 +4,13 @@ use crate::tokens::TokenType;
 
 #[derive(Debug)]
 pub struct SymbEntry {
-    tokentype: TokenType,
+    pub tokentype: TokenType,
+    pub address: Option<u32>,
 }
 
 impl SymbEntry {
     pub fn new(tokentype: TokenType) -> SymbEntry {
-        SymbEntry {tokentype}
+        SymbEntry {tokentype, address: None}
     }
 }
 
@@ -29,14 +30,19 @@ impl SymbTab {
     }
 
     pub fn add(&mut self, tok: Token) {
-        self.table.insert(tok.token_value, SymbEntry::new(tok.token_type));
+        // Add the token to the symbol table only if it doesn't already exist
+        self.table.entry(tok.token_value).or_insert(SymbEntry::new(tok.token_type));
     }
 
-    // pub fn get(&self, key: &String) -> &SymbEntry {
-    //     self.table.get(key).expect("Invalid symbol key.")
-    // }
-    //
-    // pub fn overwrite(&mut self, key: String, new_val: SymbEntry) {
-    //
-    // }
+    pub fn set_addr(&mut self, tok: &Token, addr: u32) {
+        let default = SymbEntry::new(tok.token_type);
+        let mut updated = SymbEntry::new(tok.token_type);
+        updated.address = Some(addr);
+
+        *self.table.entry(tok.token_value.clone()).or_insert(default) = updated;
+    }
+
+    pub fn get_addr(&mut self, tok: &Token) -> Option<u32> {
+        self.table.get(&tok.token_value.clone()).unwrap().address
+    }
 }
