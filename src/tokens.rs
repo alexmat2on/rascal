@@ -39,7 +39,7 @@ pub enum TokenType {
     Begin,
     End,
     Var,
-    A_Var,
+    AVar,
 
     //** Operators
     OpPlus,
@@ -71,7 +71,7 @@ impl TokenType {
             TokenType::Begin => "TK_BEGIN",
             TokenType::End => "TK_END",
             TokenType::Var => "TK_VAR",
-            TokenType::A_Var => "TK_A_VAR",
+            TokenType::AVar => "TK_A_VAR",
             TokenType::OpPlus => "TK_PLUS",
             TokenType::OpMinus => "TK_MINUS",
             TokenType::OpMult => "TK_MULT",
@@ -86,7 +86,6 @@ impl TokenType {
             TokenType::Comma => "TK_COMMA",
             TokenType::Dot => "TK_DOT",
             TokenType::Write => "TK_WRITE",
-            _ => "OTHER"
         }
     }
 }

@@ -25,7 +25,7 @@ pub struct RvmMachine {
 impl RvmMachine {
     pub fn new(code: Vec<u8>) -> RvmMachine {
         RvmMachine {
-            code: code,
+            code,
             data: vec![0; 256],
             stack: RvmStack::new(0, 256),
             ip: 0,

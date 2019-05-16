@@ -68,7 +68,7 @@ impl Scanner {
     pub fn get_token(&mut self) -> Result<(), String> {
         // Create operator table
         if self.src_length == 0 {
-            let errmsg = format!("Err: Empty source file.");
+            let errmsg = "Err: Empty source file.";
             return Err(errmsg.to_string())
         };
 
@@ -105,7 +105,7 @@ impl Scanner {
                         }
                     },
 
-                    CharGroup::INVLD | _ => {
+                    CharGroup::INVLD => {
                         // Scanner error
                         let character = self.get_char() as char;
                         let errmsg = scanner_error(
@@ -143,7 +143,7 @@ impl Scanner {
     fn get_num_lit(&mut self) -> Result<Token, String> {
         let mut value = vec![];
         let mut ttype = TokenType::IntLit;
-        let cnum = self.col_num.clone();
+        let cnum = self.col_num;
 
         loop {
             let char = self.get_char();
@@ -177,7 +177,7 @@ impl Scanner {
 
     fn get_identifier(&mut self) -> Result<Token, String> {
         let mut value = vec![];
-        let cnum = self.col_num.clone();
+        let cnum = self.col_num;
 
         loop {
             let char = self.get_char();
@@ -216,15 +216,15 @@ impl Scanner {
 
     fn get_symb(&mut self) -> Result<Token, String> {
         let mut value = vec![];
-        let cnum = self.col_num.clone();
+        let cnum = self.col_num;
 
         loop {
             let char = self.get_char();
             let char_g = tokens::get_char_group(char);
 
-            if value.len() > 0 && char == 59 {
+            if !value.is_empty() && char == 59 {
                 // Never include semicolons in a token being scanned,
-                // unless they appear alone. 
+                // unless they appear alone.
                 break;
             }
 
@@ -261,7 +261,7 @@ impl Scanner {
                     self.line_num,
                     cnum
                 );
-                return Err(errmsg)
+                Err(errmsg)
             }
         }
     }
