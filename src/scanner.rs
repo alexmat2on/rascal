@@ -207,8 +207,11 @@ impl Scanner {
             _ => self.make_tok(TokenType::Ident, value_str, cnum),
         };
 
+        // Add the scanned token to symbol table. The method will only insert if does not exist yet.
         self.symbol_table.add(ident_token.clone().unwrap());
-        ident_token
+
+        // Retrieve the newest version of this token from the symbol table
+        Ok(self.symbol_table.get(ident_token.unwrap()))
     }
 
     fn get_symb(&mut self) -> Result<Token, String> {

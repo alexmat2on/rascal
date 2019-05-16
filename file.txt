@@ -1,6 +1,4 @@
-var x, y, z;
-var i, j, k;
-var a, b;
+var x, y;
 
 begin
   x := 8;

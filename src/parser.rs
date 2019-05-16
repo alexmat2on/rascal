@@ -104,14 +104,13 @@ impl Parser {
         let cur_token = self.scan.cur_token.clone();
         self.match_tok(TokenType::Ident)?;
 
-        // set the cur_token to A_Var in symbol table
+        // set the cur_token to A_Var in symbol table and give the DATA address
         let mut update_tok = cur_token.clone();
         update_tok.token_type = TokenType::A_Var;
+        update_tok.token_addr = Some(self.gen.data_addr);
         self.scan.symbol_table.set_entry(&cur_token, &update_tok);
 
-        // Give the token its DATA address
-        let addr_val = self.gen.data_addr;
-        self.scan.symbol_table.set_addr(&cur_token, addr_val);
+        // update the latest DATA adddress
         self.gen.data_addr += 4;
 
         self.namelist_tail()?;
@@ -142,22 +141,19 @@ impl Parser {
     fn begin_st(&mut self) -> Result<(), String> {
         self.match_tok(TokenType::Begin)?;
         self.stats()?;
-        // while self.check_tok(TokenType::End).is_err() {
-        //     self.stat()?;
-        // }
         self.match_tok(TokenType::End)?;
         Ok(())
     }
 
     fn stats(&mut self) -> Result<(), String> {
         let tok = self.scan.cur_token.clone();
-
+        println!("HELLO TOK: {}\n", tok.token_type);
         while
-        self.check_tok(TokenType::Ident).is_ok() ||
+        self.check_tok(TokenType::A_Var).is_ok() ||
         self.check_tok(TokenType::Write).is_ok()
         {
             match tok.token_type {
-                TokenType::Ident => self.stat_assign()?,
+                TokenType::A_Var => self.stat_assign()?,
                 TokenType::Write => self.stat_write()?,
                 _ => panic!("???")
             }
@@ -184,7 +180,7 @@ impl Parser {
 
     fn stat_assign(&mut self) -> Result<(), String> {
         let cur_token = self.scan.cur_token.clone();    // Copy this for later
-        self.match_tok(TokenType::Ident)?;
+        self.match_tok(TokenType::A_Var)?;
         self.gen.op("OP_PUSH");
 
         let addr_val = self.scan.symbol_table.get_addr(&cur_token).expect("ERR: Undeclared variable!");
@@ -235,7 +231,7 @@ impl Parser {
 
                 self.match_tok(TokenType::IntLit)?;
             },
-            TokenType::Ident => {
+            TokenType::A_Var => {
                 // Push immediate the address for the variable onto the stack.
                 self.gen.op("OP_PUSH");
                 let tok_addr = self.scan.symbol_table.get_addr(&tok).expect("ERR: Variable is undeclared!");
@@ -245,7 +241,7 @@ impl Parser {
                 // at DATA segment.
                 self.gen.op("OP_LOAD");
 
-                self.match_tok(TokenType::Ident)?;
+                self.match_tok(TokenType::A_Var)?;
             },
             TokenType::OpMinus => {
                 self.match_tok(TokenType::OpMinus)?;
