@@ -9,7 +9,19 @@
 *       <decl> -> <stat-decl>;
 *       <prog> -> begin <stat> end
 *       <stat> -> <stat-decl>; | <expr>;
-*       <stat-decl> -> var id
+*       <stat-decl> -> var <namelist>;
+*       <namelist> -> id, <namelist> | id
+*
+* The language grammar specification -- IN CLASS
+*       <prog> -> <decls> <body>. EOF
+*       <decls> -> var <namelist> <decl-tail> | const <namelist> <decl-tail> |... type, label, procedure, function
+*       <namelist> -> id<namelist-tail>; : <type>
+*       <namelist-tail> NULL | ,<namelist>
+*       <decl-tail> -> NULL | ;<decls>
+*       <body> -> <begin-st>
+*       <begin-st> -> begin <stats> <end>
+*       <stats> -> NULL | <stats><stat-tail>
+*       <stat-tail> -> ;<stats>
 *
 * The expression grammer specification (removing instances of immediate left recursion) is as follows:
 *       E  -> TE'
@@ -46,8 +58,9 @@ impl Parser {
     }
 
     pub fn parse(&mut self) -> Result<(), String> {
-        self.declar()?;
-        self.program()?;
+        self.decls()?;
+        self.body()?;
+        self.match_tok(TokenType::Dot)?;
         self.match_tok(TokenType::Eof)?;
         self.gen.op("OP_EXIT");
         Ok(())
@@ -73,28 +86,99 @@ impl Parser {
     }
 
     // === GRAMMAR PRODUCTIONS ====================================================================
-    fn declar(&mut self) -> Result<(), String> {
-        self.stat_decl()?;
-        self.match_tok(TokenType::Semi)?;
+    fn decls(&mut self) -> Result<(), String> {
+        // self.stat_decl()?;
+        while
+        self.check_tok(TokenType::Var).is_ok()
+        {
+            self.match_tok(TokenType::Var)?;
+            self.namelist()?;
+            self.decl_tail()?;
+        }
 
+        // self.match_tok(TokenType::Semi)?;
         Ok(())
     }
 
-    fn program(&mut self) -> Result<(), String> {
+    fn namelist(&mut self) -> Result<(), String> {
+        let cur_token = self.scan.cur_token.clone();
+        self.match_tok(TokenType::Ident)?;
+
+        // set the cur_token to A_Var in symbol table
+        let mut update_tok = cur_token.clone();
+        update_tok.token_type = TokenType::A_Var;
+        self.scan.symbol_table.set_entry(&cur_token, &update_tok);
+
+        // Give the token its DATA address
+        let addr_val = self.gen.data_addr;
+        self.scan.symbol_table.set_addr(&cur_token, addr_val);
+        self.gen.data_addr += 4;
+
+        self.namelist_tail()?;
+        Ok(())
+    }
+
+    fn namelist_tail(&mut self) -> Result<(), String> {
+        if self.scan.cur_token.token_type == TokenType::Comma {
+            self.match_tok(TokenType::Comma)?;
+            self.namelist()?;
+        }
+        Ok(())
+    }
+
+    fn decl_tail(&mut self) -> Result<(), String> {
+        if self.scan.cur_token.token_type == TokenType::Semi {
+            self.match_tok(TokenType::Semi)?;
+            self.decls()?;
+        }
+        Ok(())
+    }
+
+    fn body(&mut self) -> Result<(), String> {
+        self.begin_st()?;
+        Ok(())
+    }
+
+    fn begin_st(&mut self) -> Result<(), String> {
         self.match_tok(TokenType::Begin)?;
-        while self.check_tok(TokenType::End).is_err() {
-            self.stat()?;
-        }
+        self.stats()?;
+        // while self.check_tok(TokenType::End).is_err() {
+        //     self.stat()?;
+        // }
         self.match_tok(TokenType::End)?;
-        self.match_tok(TokenType::Dot)?;
         Ok(())
     }
 
-    fn stat(&mut self) -> Result<(), String> {
-        if self.stat_assign().is_err() {
-            self.expression()?;
+    fn stats(&mut self) -> Result<(), String> {
+        let tok = self.scan.cur_token.clone();
+
+        while
+        self.check_tok(TokenType::Ident).is_ok() ||
+        self.check_tok(TokenType::Write).is_ok()
+        {
+            match tok.token_type {
+                TokenType::Ident => self.stat_assign()?,
+                TokenType::Write => self.stat_write()?,
+                _ => panic!("???")
+            }
+            self.stats_tail()?;
         }
+        Ok(())
+    }
+
+    fn stats_tail(&mut self) -> Result<(), String> {
         self.match_tok(TokenType::Semi)?;
+        self.stats()?;
+        Ok(())
+    }
+
+    fn stat_write(&mut self) -> Result<(), String> {
+        self.match_tok(TokenType::Write)?;
+        self.match_tok(TokenType::LParen)?;
+        self.expression()?;
+        self.match_tok(TokenType::RParen)?;
+
+        self.gen.op("OP_WRITE");
         Ok(())
     }
 
@@ -112,49 +196,16 @@ impl Parser {
         Ok(())
     }
 
-    fn stat_decl(&mut self) -> Result<(), String> {
-        self.match_tok(TokenType::Var)?;
-
-        let cur_token = self.scan.cur_token.clone();
-        self.match_tok(TokenType::Ident)?;
-
-        let addr_val = self.gen.data_addr;
-        self.scan.symbol_table.set_addr(&cur_token, addr_val);
-        self.gen.data_addr += 4;
-
-        while self.check_tok(TokenType::Semi).is_err() {
-            self.match_tok(TokenType::Comma)?;
-
-            let cur_token = self.scan.cur_token.clone();
-            self.match_tok(TokenType::Ident)?;
-
-            let addr_val = self.gen.data_addr;
-            self.scan.symbol_table.set_addr(&cur_token, addr_val);
-            self.gen.data_addr += 4;
-        }
-
-        Ok(())
-    }
-
     fn expression(&mut self) -> Result<(), String> {
         self.term()?;
         while
         self.check_tok(TokenType::OpPlus).is_ok() ||
         self.check_tok(TokenType::OpMinus).is_ok()
         {
-            match self.scan.cur_token.token_type {
-                TokenType::OpPlus => {
-                    self.match_tok(self.scan.cur_token.token_type)?;
-                    self.term()?;
-                    self.gen.op("OP_ADD");
-                },
-                TokenType::OpMinus => {
-                    self.match_tok(self.scan.cur_token.token_type)?;
-                    self.term()?;
-                    self.gen.op("OP_SUB");
-                },
-                _ => ()
-            }
+            let tok = self.scan.cur_token.clone();
+            self.match_tok(tok.token_type)?;
+            self.term()?;
+            self.gen.op(tok.to_op());
         };
         Ok(())
     }
@@ -165,19 +216,10 @@ impl Parser {
         self.check_tok(TokenType::OpMult).is_ok() ||
         self.check_tok(TokenType::OpDivi).is_ok()
         {
-            match self.scan.cur_token.token_type {
-                TokenType::OpMult => {
-                    self.match_tok(TokenType::OpMult)?;
-                    self.factor()?;
-                    self.gen.op("OP_MULT");
-                },
-                TokenType::OpDivi => {
-                    self.match_tok(TokenType::OpDivi)?;
-                    self.factor()?;
-                    self.gen.op("OP_DIVI");
-                },
-                _ => ()
-            };
+            let tok = self.scan.cur_token.clone();
+            self.match_tok(tok.token_type)?;
+            self.factor()?;
+            self.gen.op(tok.to_op());
         };
 
         Ok(())

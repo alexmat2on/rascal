@@ -8,6 +8,7 @@
 ///     0x04 -> Load: Push value from DATA[stack[sp]] onto stack.
 ///     0x10 -> Add two values from stack
 ///     0x11 -> Subtract
+///     0x20 -> Write the top element of stack to stdout
 ///
 ///
 ///
@@ -42,33 +43,16 @@ impl RvmMachine {
                     self.stack.push(self.code[self.ip + 2]);
                     self.stack.push(self.code[self.ip + 3]);
                     self.stack.push(self.code[self.ip + 4]);
-                    self.ip += 5;
+                    self.ip += 4;
                 },
                 0x02 => self.sp -= 1,
-                0x03 => {
-                    self.store();
-                    self.ip += 1;
-                },
-                0x04 => {
-                    self.load();
-                    self.ip += 1;
-                },
-                0x10 => {
-                    self.do_op(|a, b| a + b);
-                    self.ip += 1;
-                },
-                0x11 => {
-                    self.do_op(|a, b| b - a);
-                    self.ip += 1;
-                },
-                0x12 => {
-                    self.do_op(|a, b| a * b);
-                    self.ip += 1;
-                },
-                0x13 => {
-                    self.do_op(|a, b| b / a);
-                    self.ip += 1;
-                },
+                0x03 => self.store(),
+                0x04 => self.load(),
+                0x10 => self.do_binary(|a, b| a + b),
+                0x11 => self.do_binary(|a, b| b - a),
+                0x12 => self.do_binary(|a, b| a * b),
+                0x13 => self.do_binary(|a, b| b / a),
+                0x20 => self.write_top(),
                 _ => {
                     println!("Uh oh... dumping...");
                     println!("{:?}", self.code);
@@ -76,16 +60,34 @@ impl RvmMachine {
                     panic!("Illegal RVM instruction.");
                 }
             }
+
+            self.ip += 1;
         }
 
         self.stack.print(false);
     }
 
-    fn do_op<F>(&mut self, op: F) where
+    fn write_top(&mut self) {
+        let a = read_be_u32(&mut self.stack.pop(4));
+        println!("{}", a);
+    }
+
+    fn do_unary<F>(&mut self, unary_op: F) where
+    F: Fn(u32) -> u32 {
+        let a = read_be_u32(&mut self.stack.pop(4));
+        let result = unary_op(a).to_be_bytes();
+
+        self.stack.push(result[0]);
+        self.stack.push(result[1]);
+        self.stack.push(result[2]);
+        self.stack.push(result[3]);
+    }
+
+    fn do_binary<F>(&mut self, binary_op: F) where
     F: Fn(u32, u32) -> u32 {
         let a = read_be_u32(&mut self.stack.pop(4));
         let b = read_be_u32(&mut self.stack.pop(4));
-        let result = op(a, b).to_be_bytes();
+        let result = binary_op(a, b).to_be_bytes();
 
         self.stack.push(result[0]);
         self.stack.push(result[1]);

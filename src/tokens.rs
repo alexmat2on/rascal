@@ -5,12 +5,13 @@ use std::fmt;
 pub struct Token {
     pub token_type: TokenType,
     pub token_value: String,
+    pub token_addr: Option<u32>,
     pub src_info: (usize, usize)
 }
 
 impl Token {
     pub fn new(token_type: TokenType, token_value: String, src_info: (usize, usize)) -> Token {
-        Token { token_type, token_value, src_info }
+        Token { token_type, token_value, token_addr: None, src_info }
     }
 
     pub fn to_op(&self) -> &str {
@@ -22,6 +23,7 @@ impl Token {
             TokenType::OpMult => "OP_MULT",
             TokenType::OpDivi => "OP_DIVI",
             TokenType::OpAssign => "OP_ASSIGN",
+            TokenType::Write => "OP_WRITE",
             _ => "NOP"
         }
     }
@@ -37,6 +39,7 @@ pub enum TokenType {
     Begin,
     End,
     Var,
+    A_Var,
 
     //** Operators
     OpPlus,
@@ -57,6 +60,7 @@ pub enum TokenType {
     Semi,
     Comma,
     Dot,
+    Write,
 }
 
 impl TokenType {
@@ -67,6 +71,7 @@ impl TokenType {
             TokenType::Begin => "TK_BEGIN",
             TokenType::End => "TK_END",
             TokenType::Var => "TK_VAR",
+            TokenType::A_Var => "TK_A_VAR",
             TokenType::OpPlus => "TK_PLUS",
             TokenType::OpMinus => "TK_MINUS",
             TokenType::OpMult => "TK_MULT",
@@ -80,6 +85,7 @@ impl TokenType {
             TokenType::Semi => "TK_SEMICOL",
             TokenType::Comma => "TK_COMMA",
             TokenType::Dot => "TK_DOT",
+            TokenType::Write => "TK_WRITE",
             _ => "OTHER"
         }
     }

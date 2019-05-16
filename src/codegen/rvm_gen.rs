@@ -25,6 +25,7 @@ impl CodeGenerator for RvmGenerator {
             "OP_SUB" => self.code.push(0x11),
             "OP_MULT" => self.code.push(0x12),
             "OP_DIVI" => self.code.push(0x13),
+            "OP_WRITE" => self.code.push(0x20),
             _ => panic!("Invalid op code given.")
         }
     }

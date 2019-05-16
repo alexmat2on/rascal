@@ -1,10 +1,11 @@
 var x, y, z;
+var i, j, k;
+var a, b;
 
 begin
-x := 3;
-y := 2;
-z := 1;
-1 + x;
-1 + y;
-1 + z;
+  x := 8;
+  write(x) ;
+  y := 3;
+  x := 7;
+  write(x + y) ;
 end.

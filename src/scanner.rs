@@ -203,6 +203,7 @@ impl Scanner {
             "begin" => self.make_tok(TokenType::Begin, value_str, cnum),
             "end" => self.make_tok(TokenType::End, value_str, cnum),
             "var" => self.make_tok(TokenType::Var, value_str, cnum),
+            "write" => self.make_tok(TokenType::Write, value_str, cnum),
             _ => self.make_tok(TokenType::Ident, value_str, cnum),
         };
 
