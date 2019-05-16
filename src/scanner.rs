@@ -222,6 +222,12 @@ impl Scanner {
             let char = self.get_char();
             let char_g = tokens::get_char_group(char);
 
+            if value.len() > 0 && char == 59 {
+                // Never include semicolons in a token being scanned,
+                // unless they appear alone. 
+                break;
+            }
+
             match char_g {
                 CharGroup::PUNCT => value.push(char),
                 _ => break,

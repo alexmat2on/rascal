@@ -2,8 +2,8 @@ var x, y;
 
 begin
   x := 8;
-  write(x) ;
+  write(x);
   y := 3;
   x := 7;
-  write(x + y) ;
+  write(x + y);
 end.
