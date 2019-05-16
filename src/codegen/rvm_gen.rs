@@ -1,7 +1,7 @@
 use super::CodeGenerator;
 
 pub struct RvmGenerator {
-    i_ptr: usize,
+    pub i_ptr: usize,
     pub data_addr: u32,
     pub code: Vec<u8>,
 }
@@ -26,6 +26,7 @@ impl CodeGenerator for RvmGenerator {
             "OP_MULT" => self.code.push(0x12),
             "OP_DIVI" => self.code.push(0x13),
             "OP_WRITE" => self.code.push(0x20),
+            "OP_JTRUE" => self.code.push(0x30),
             _ => panic!("Invalid op code given.")
         }
     }

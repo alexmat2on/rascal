@@ -1,9 +1,9 @@
-var x, y;
+var x;
 
 begin
-  x := 8;
-  write(x);
-  y := 3;
-  x := 7;
-  write(x + y);
+  x := 10;
+  repeat
+    x := x - 1;
+    write(x);
+  until x;
 end.

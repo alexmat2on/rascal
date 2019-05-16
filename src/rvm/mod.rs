@@ -1,14 +1,15 @@
 ///
 ///
 /// Instruction Set:
-///     0x00 -> Terminate execution
-///     0x01 -> Push 4 bytes onto stack
-///     0x02 -> Pop x bytes from stack
-///     0x03 -> Store: Store value at [sp] into DATA address given by [sp - 1]
-///     0x04 -> Load: Push value from DATA[stack[sp]] onto stack.
-///     0x10 -> Add two values from stack
-///     0x11 -> Subtract
-///     0x20 -> Write the top element of stack to stdout
+///     0x00 -> OP_EXIT  -  Terminate execution
+///     0x01 -> OP_PUSH  -  Push 4 bytes onto stack
+///     0x02 -> OP_POP   -  Pop x bytes from stack
+///     0x03 -> OP_STORE -  Store: Store value at [sp] into DATA address given by [sp - 1]
+///     0x04 -> OP_LOAD  -  Load: Push value from DATA[stack[sp]] onto stack.
+///     0x10 -> OP_ADD   -  Add two values from stack
+///     0x11 -> OP_SUB   -  Subtract
+///     0x20 -> OP_WRITE -  Write the top element of stack to stdout
+///     0x30 -> OP_JTRUE -  Jump to address if top of stack is true.
 ///
 ///
 ///
@@ -53,11 +54,11 @@ impl RvmMachine {
                 0x12 => self.do_binary(|a, b| a * b),
                 0x13 => self.do_binary(|a, b| b / a),
                 0x20 => self.write_top(),
+                0x30 => self.j_true(),
                 _ => {
-                    println!("Uh oh... dumping...");
+                    panic!("Illegal RVM instruction. Dump...\n\n");
                     println!("{:?}", self.code);
                     self.stack.print(false);
-                    panic!("Illegal RVM instruction.");
                 }
             }
 
@@ -114,6 +115,15 @@ impl RvmMachine {
         self.stack.push(self.data[(address + 1) as usize]);
         self.stack.push(self.data[(address + 2) as usize]);
         self.stack.push(self.data[(address + 3) as usize]);
+    }
+
+    fn j_true(&mut self) {
+        let addr = read_be_u32(&mut self.stack.pop(4));
+        let val = read_be_u32(&mut self.stack.pop(4));
+        if val != 0 {
+            // Subtract a "1" because after match, ip is incremented.
+            self.ip = addr as usize - 1;
+        }
     }
 }
 

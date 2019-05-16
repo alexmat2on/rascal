@@ -28,7 +28,7 @@ pub struct Scanner {
     pub symbol_table: SymbTab
 }
 
-fn load_buffer(filename: &String) -> Result<(Vec<u8>, usize), String> {
+fn load_buffer(filename: &str) -> Result<(Vec<u8>, usize), String> {
     let mut buffer = vec![];
 
     let mut open_file;
@@ -47,7 +47,7 @@ fn load_buffer(filename: &String) -> Result<(Vec<u8>, usize), String> {
 }
 
 impl Scanner {
-    pub fn new(filename : &String) -> Result<Scanner, String> {
+    pub fn new(filename : &str) -> Result<Scanner, String> {
         let src_load = load_buffer(filename)?;
         let cur_token = Token::new(TokenType::Null, String::from(""), (0, 0));
 
@@ -83,8 +83,6 @@ impl Scanner {
 
                     // An identifier: variable, function name, ...
                     CharGroup::ALPHA => self.get_identifier(),
-
-                    // CharGroup::QUOTE => (), // A string or char literal... ?? will i keep this?
 
                     // A symbol, operator, ...
                     CharGroup::PUNCT => self.get_symb(),
@@ -204,6 +202,8 @@ impl Scanner {
             "end" => self.make_tok(TokenType::End, value_str, cnum),
             "var" => self.make_tok(TokenType::Var, value_str, cnum),
             "write" => self.make_tok(TokenType::Write, value_str, cnum),
+            "repeat" => self.make_tok(TokenType::Repeat, value_str, cnum),
+            "until" => self.make_tok(TokenType::Until, value_str, cnum),
             _ => self.make_tok(TokenType::Ident, value_str, cnum),
         };
 

@@ -31,6 +31,6 @@ impl SymbTab {
     }
 
     pub fn get_addr(&mut self, tok: &Token) -> Option<u32> {
-        self.table.get(&tok.token_value.clone()).unwrap().token_addr
+        self.table[&tok.token_value.clone()].token_addr
     }
 }

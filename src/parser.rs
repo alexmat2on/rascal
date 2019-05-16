@@ -87,7 +87,6 @@ impl Parser {
 
     // === GRAMMAR PRODUCTIONS ====================================================================
     fn decls(&mut self) -> Result<(), String> {
-        // self.stat_decl()?;
         while
         self.check_tok(TokenType::Var).is_ok()
         {
@@ -95,8 +94,6 @@ impl Parser {
             self.namelist()?;
             self.decl_tail()?;
         }
-
-        // self.match_tok(TokenType::Semi)?;
         Ok(())
     }
 
@@ -138,22 +135,17 @@ impl Parser {
         Ok(())
     }
 
-    fn begin_st(&mut self) -> Result<(), String> {
-        self.match_tok(TokenType::Begin)?;
-        self.stats()?;
-        self.match_tok(TokenType::End)?;
-        Ok(())
-    }
-
     fn stats(&mut self) -> Result<(), String> {
         let tok = self.scan.cur_token.clone();
         while
         self.check_tok(TokenType::AVar).is_ok() ||
+        self.check_tok(TokenType::Repeat).is_ok() ||
         self.check_tok(TokenType::Write).is_ok()
         {
             match tok.token_type {
-                TokenType::AVar => self.stat_assign()?,
-                TokenType::Write => self.stat_write()?,
+                TokenType::AVar => self.assign_st()?,
+                TokenType::Repeat => self.repeat_st()?,
+                TokenType::Write => self.write_st()?,
                 _ => panic!("???")
             }
             self.stats_tail()?;
@@ -167,17 +159,15 @@ impl Parser {
         Ok(())
     }
 
-    fn stat_write(&mut self) -> Result<(), String> {
-        self.match_tok(TokenType::Write)?;
-        self.match_tok(TokenType::LParen)?;
-        self.expression()?;
-        self.match_tok(TokenType::RParen)?;
-
-        self.gen.op("OP_WRITE");
+    // === STATEMENT HANDLERS =====================================================================
+    fn begin_st(&mut self) -> Result<(), String> {
+        self.match_tok(TokenType::Begin)?;
+        self.stats()?;
+        self.match_tok(TokenType::End)?;
         Ok(())
     }
 
-    fn stat_assign(&mut self) -> Result<(), String> {
+    fn assign_st(&mut self) -> Result<(), String> {
         let cur_token = self.scan.cur_token.clone();    // Copy this for later
         self.match_tok(TokenType::AVar)?;
         self.gen.op("OP_PUSH");
@@ -191,6 +181,33 @@ impl Parser {
         Ok(())
     }
 
+    fn repeat_st(&mut self) -> Result<(), String> {
+        self.match_tok(TokenType::Repeat)?;
+        let label = self.gen.i_ptr;
+        println!("Whats label? {}\n", label);
+        self.stats()?;
+        self.match_tok(TokenType::Until)?;
+        // self.condition()?;
+        self.expression()?;
+
+        self.gen.op("OP_PUSH");
+        self.gen.data(label.to_string(), "u32", 4);
+        self.gen.op("OP_JTRUE");
+
+        Ok(())
+    }
+
+    fn write_st(&mut self) -> Result<(), String> {
+        self.match_tok(TokenType::Write)?;
+        self.match_tok(TokenType::LParen)?;
+        self.expression()?;
+        self.match_tok(TokenType::RParen)?;
+
+        self.gen.op("OP_WRITE");
+        Ok(())
+    }
+
+    // === EXPRESSION PARSERS =====================================================================
     fn expression(&mut self) -> Result<(), String> {
         self.term()?;
         while
