@@ -204,6 +204,8 @@ impl Scanner {
             "write" => self.make_tok(TokenType::Write, value_str, cnum),
             "repeat" => self.make_tok(TokenType::Repeat, value_str, cnum),
             "until" => self.make_tok(TokenType::Until, value_str, cnum),
+            "and" => self.make_tok(TokenType::OpAnd, value_str, cnum),
+            "or" => self.make_tok(TokenType::OpOr, value_str, cnum),
             _ => self.make_tok(TokenType::Ident, value_str, cnum),
         };
 
@@ -245,6 +247,8 @@ impl Scanner {
 
         match &value_str[..] {
             ":=" => self.make_tok(TokenType::OpAssign, value_str, cnum),
+            "=" => self.make_tok(TokenType::OpEqual, value_str, cnum),
+            "<>" => self.make_tok(TokenType::OpNEqual, value_str, cnum),
             "+" => self.make_tok(TokenType::OpPlus, value_str, cnum),
             "-" => self.make_tok(TokenType::OpMinus, value_str, cnum),
             "*" => self.make_tok(TokenType::OpMult, value_str, cnum),

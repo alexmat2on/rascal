@@ -212,7 +212,8 @@ impl Parser {
         self.term()?;
         while
         self.check_tok(TokenType::OpPlus).is_ok() ||
-        self.check_tok(TokenType::OpMinus).is_ok()
+        self.check_tok(TokenType::OpMinus).is_ok() ||
+        self.check_tok(TokenType::OpOr).is_ok()
         {
             let tok = self.scan.cur_token.clone();
             self.match_tok(tok.token_type)?;
@@ -226,7 +227,10 @@ impl Parser {
         self.factor()?;
         while
         self.check_tok(TokenType::OpMult).is_ok() ||
-        self.check_tok(TokenType::OpDivi).is_ok()
+        self.check_tok(TokenType::OpDivi).is_ok() ||
+        self.check_tok(TokenType::OpAnd).is_ok() ||
+        self.check_tok(TokenType::OpEqual).is_ok() ||
+        self.check_tok(TokenType::OpNEqual).is_ok()
         {
             let tok = self.scan.cur_token.clone();
             self.match_tok(tok.token_type)?;

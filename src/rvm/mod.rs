@@ -10,7 +10,7 @@
 ///     0x11 -> OP_SUB   -  Subtract
 ///     0x20 -> OP_WRITE -  Write the top element of stack to stdout
 ///     0x30 -> OP_JTRUE -  Jump to address if top of stack is true.
-///
+///     0x40 -> OP_EQL   -  Determine if two top stack elements are boolean equal
 ///
 ///
 use std::convert::TryInto;
@@ -49,12 +49,16 @@ impl RvmMachine {
                 0x02 => self.sp -= 1,
                 0x03 => self.store(),
                 0x04 => self.load(),
-                0x10 => self.do_binary(|a, b| a + b),
-                0x11 => self.do_binary(|a, b| b - a),
-                0x12 => self.do_binary(|a, b| a * b),
-                0x13 => self.do_binary(|a, b| b / a),
+                0x10 => self.do_u32_binary(|a, b| a + b),
+                0x11 => self.do_u32_binary(|a, b| b - a),
+                0x12 => self.do_u32_binary(|a, b| a * b),
+                0x13 => self.do_u32_binary(|a, b| b / a),
                 0x20 => self.write_top(),
                 0x30 => self.j_true(),
+                0x40 => self.do_bool_binary(|a, b| a == b),
+                0x41 => self.do_bool_binary(|a, b| a != b),
+                0x42 => self.do_bool_binary(|a, b| {a != 0 && b != 0}),
+                0x43 => self.do_bool_binary(|a, b| {a != 0 || b != 0}),
                 _ => {
                     panic!("Illegal RVM instruction. Dump...\n\n");
                     println!("{:?}", self.code);
@@ -73,7 +77,7 @@ impl RvmMachine {
         println!("{}", a);
     }
 
-    fn do_unary<F>(&mut self, unary_op: F) where
+    fn do_u32_unary<F>(&mut self, unary_op: F) where
     F: Fn(u32) -> u32 {
         let a = read_be_u32(&mut self.stack.pop(4));
         let result = unary_op(a).to_be_bytes();
@@ -84,7 +88,7 @@ impl RvmMachine {
         self.stack.push(result[3]);
     }
 
-    fn do_binary<F>(&mut self, binary_op: F) where
+    fn do_u32_binary<F>(&mut self, binary_op: F) where
     F: Fn(u32, u32) -> u32 {
         let a = read_be_u32(&mut self.stack.pop(4));
         let b = read_be_u32(&mut self.stack.pop(4));
@@ -94,6 +98,26 @@ impl RvmMachine {
         self.stack.push(result[1]);
         self.stack.push(result[2]);
         self.stack.push(result[3]);
+    }
+
+    fn do_bool_binary<F>(&mut self, binary_op: F) where
+    F: Fn(u32, u32) -> bool {
+        let a = read_be_u32(&mut self.stack.pop(4));
+        let b = read_be_u32(&mut self.stack.pop(4));
+
+        println!("res {:?}", binary_op(a, b));
+
+        if binary_op(a, b) {
+            self.stack.push(0);
+            self.stack.push(0);
+            self.stack.push(0);
+            self.stack.push(1);
+        } else {
+            self.stack.push(0);
+            self.stack.push(0);
+            self.stack.push(0);
+            self.stack.push(0);
+        }
     }
 
     fn store(&mut self) {
@@ -120,7 +144,7 @@ impl RvmMachine {
     fn j_true(&mut self) {
         let addr = read_be_u32(&mut self.stack.pop(4));
         let val = read_be_u32(&mut self.stack.pop(4));
-        if val != 0 {
+        if val == 0 {
             // Subtract a "1" because after match, ip is incremented.
             self.ip = addr as usize - 1;
         }

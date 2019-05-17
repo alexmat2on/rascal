@@ -23,6 +23,10 @@ impl Token {
             TokenType::OpMult => "OP_MULT",
             TokenType::OpDivi => "OP_DIVI",
             TokenType::OpAssign => "OP_ASSIGN",
+            TokenType::OpEqual => "OP_EQUAL",
+            TokenType::OpNEqual => "OP_NEQUAL",
+            TokenType::OpAnd => "OP_AND",
+            TokenType::OpOr => "OP_OR",
             TokenType::Write => "OP_WRITE",
             _ => "NOP"
         }
@@ -49,6 +53,10 @@ pub enum TokenType {
     OpMinus,
     OpDivi,
     OpAssign,
+    OpEqual,
+    OpNEqual,
+    OpAnd,
+    OpOr,
 
     //** Constants
     IntLit,
@@ -81,6 +89,10 @@ impl TokenType {
             TokenType::OpMult => "TK_MULT",
             TokenType::OpDivi => "TK_DIVI",
             TokenType::OpAssign => "TK_ASSIGN",
+            TokenType::OpEqual => "TK_EQUAL",
+            TokenType::OpNEqual => "TK_NOT_EQUAL",
+            TokenType::OpAnd => "TK_AND",
+            TokenType::OpOr => "TK_OR",
             TokenType::IntLit => "TK_INTLIT",
             TokenType::RealLit => "TK_REALLIT",
             TokenType::Ident => "TK_IDENT",
