@@ -5,14 +5,6 @@
 * will read a token and apply a grammar production rule to it.
 *
 * The language grammar specification
-*       <S> -> <decl> <prog> EOF
-*       <decl> -> <stat-decl>;
-*       <prog> -> begin <stat> end
-*       <stat> -> <stat-decl>; | <expr>;
-*       <stat-decl> -> var <namelist>;
-*       <namelist> -> id, <namelist> | id
-*
-* The language grammar specification -- IN CLASS
 *       <prog> -> <decls> <body>. EOF
 *       <decls> -> var <namelist> <decl-tail> | const <namelist> <decl-tail> |... type, label, procedure, function
 *       <namelist> -> id<namelist-tail>; : <type>
