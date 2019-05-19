@@ -48,6 +48,9 @@ pub enum TokenType {
     Until,
     While,
     Do,
+    If,
+    Then,
+    Else,
 
     //** Operators
     OpPlus,
@@ -88,6 +91,9 @@ impl TokenType {
             TokenType::Until => "TK_UNTIL",
             TokenType::While => "TK_WHILE",
             TokenType::Do => "TK_DO",
+            TokenType::If => "TK_IF",
+            TokenType::Then => "TK_THEN",
+            TokenType::Else => "TK_ELSE",
             TokenType::OpPlus => "TK_PLUS",
             TokenType::OpMinus => "TK_MINUS",
             TokenType::OpMult => "TK_MULT",

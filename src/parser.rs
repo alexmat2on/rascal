@@ -14,7 +14,9 @@
 *       <begin-st> -> begin <stats> <end>
 *       <stats> -> NULL | <repeat st><stat-tail> | <while st> ... <if st> ... ...
 *       <stat-tail> -> ;<stats>
-*       <repeat st> ->
+*       <repeat st> -> repeat <stats> until <condition>
+*       <while st> -> while <condition> do <begin-st>
+*       <if st> -> if <condition> then <stats> | if <condition> then <stats> else <stats>
 *
 * The expression grammer specification (removing instances of immediate left recursion) is as follows:
 *       E  -> TE'
@@ -134,12 +136,14 @@ impl Parser {
         self.check_tok(TokenType::AVar).is_ok() ||
         self.check_tok(TokenType::Repeat).is_ok() ||
         self.check_tok(TokenType::While).is_ok() ||
+        self.check_tok(TokenType::If).is_ok() ||
         self.check_tok(TokenType::Write).is_ok()
         {
             match tok.token_type {
                 TokenType::AVar => self.assign_st()?,
                 TokenType::Repeat => self.repeat_st()?,
                 TokenType::While => self.while_st()?,
+                TokenType::If => self.if_st()?,
                 TokenType::Write => self.write_st()?,
                 _ => panic!("???")
             }
@@ -216,6 +220,47 @@ impl Parser {
         self.gen.fill(save.to_string(), "u32", 4);
         self.gen.i_ptr = save;
 
+        Ok(())
+    }
+
+    fn if_st(&mut self) -> Result<(), String> {
+        self.match_tok(TokenType::If)?;
+        self.expression()?; // Evaluate condition
+
+        // Set up the jump with temporary 0 address
+        self.gen.op("OP_PUSH");
+        let hole = self.gen.i_ptr;
+        self.gen.data("0".to_string(), "u32", 4);
+        self.gen.op("OP_JFALSE");
+
+        self.match_tok(TokenType::Then)?;
+        self.begin_st()?;
+
+        let hole2 = self.gen.i_ptr;
+        if self.check_tok(TokenType::Else).is_ok() {
+            self.gen.data("0".to_string(), "u32", 4);
+            self.gen.op("OP_JMP");
+        }
+
+        // Now that statements are done, fill in the previous hole.
+        let save = self.gen.i_ptr;
+        self.gen.i_ptr = hole;
+        self.gen.fill(save.to_string(), "u32", 4);
+        self.gen.i_ptr = save;
+
+        if self.check_tok(TokenType::Else).is_ok() {
+            self.match_tok(TokenType::Else)?;
+            self.begin_st()?;
+
+            let save2 = self.gen.i_ptr;
+            self.gen.i_ptr = hole2;
+            self.gen.fill(save2.to_string(), "u32", 4);
+            self.gen.i_ptr = save2;
+        }
+        Ok(())
+    }
+
+    fn if_stats(&mut self) -> Result<(), String> {
         Ok(())
     }
 
