@@ -204,6 +204,8 @@ impl Scanner {
             "write" => self.make_tok(TokenType::Write, value_str, cnum),
             "repeat" => self.make_tok(TokenType::Repeat, value_str, cnum),
             "until" => self.make_tok(TokenType::Until, value_str, cnum),
+            "while" => self.make_tok(TokenType::While, value_str, cnum),
+            "do" => self.make_tok(TokenType::Do, value_str, cnum),
             "and" => self.make_tok(TokenType::OpAnd, value_str, cnum),
             "or" => self.make_tok(TokenType::OpOr, value_str, cnum),
             _ => self.make_tok(TokenType::Ident, value_str, cnum),

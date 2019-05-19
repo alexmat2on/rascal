@@ -8,5 +8,10 @@ begin
     y := y + 1;
     write(x);
   until x <> 4;
-  write(y);
+
+  while y <> 5 do
+    begin
+      y := y - 1;
+      write(y);
+    end;
 end.

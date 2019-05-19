@@ -22,9 +22,9 @@ immediately execute the resulting bytecode at once.
 
 * [x] Expression parsing & evaluation
 * [x] Variable declarations & assignments
-* [ ] Loop structures:
+* [x] Loop structures:
   - [x] `repeat`
-  - [ ] `while`
+  - [x] `while`
 * [ ] Control structures:
   - [ ] `if`
   - [ ] `switch`

@@ -31,6 +31,8 @@ impl CodeGenerator for RvmGenerator {
             "OP_OR" => self.code.push(0x43),
             "OP_WRITE" => self.code.push(0x20),
             "OP_JTRUE" => self.code.push(0x30),
+            "OP_JFALSE" => self.code.push(0x31),
+            "OP_JMP" => self.code.push(0x32),
             _ => panic!("Invalid op code given.")
         }
     }
@@ -45,5 +47,19 @@ impl CodeGenerator for RvmGenerator {
         let mut value_bytes = value_parsed.to_be_bytes().to_vec();
         self.code.append(&mut value_bytes);
         self.i_ptr += dsize;
+    }
+
+    fn fill(&mut self, data: String, dtype: &str, dsize: usize) {
+        let value_parsed;
+        match dtype {
+            "u32" => value_parsed = data.parse::<u32>().expect("Expected u32 conversion"),
+            _ => panic!("Invalid data type specified.")
+        };
+
+        let mut value_bytes = value_parsed.to_be_bytes().to_vec();
+        self.code[self.i_ptr] = value_bytes[0];
+        self.code[self.i_ptr + 1] = value_bytes[1];
+        self.code[self.i_ptr + 2] = value_bytes[2];
+        self.code[self.i_ptr + 3] = value_bytes[3];
     }
 }

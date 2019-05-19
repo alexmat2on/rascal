@@ -1,16 +1,18 @@
 ///
 ///
 /// Instruction Set:
-///     0x00 -> OP_EXIT  -  Terminate execution
-///     0x01 -> OP_PUSH  -  Push 4 bytes onto stack
-///     0x02 -> OP_POP   -  Pop x bytes from stack
-///     0x03 -> OP_STORE -  Store: Store value at [sp] into DATA address given by [sp - 1]
-///     0x04 -> OP_LOAD  -  Load: Push value from DATA[stack[sp]] onto stack.
-///     0x10 -> OP_ADD   -  Add two values from stack
-///     0x11 -> OP_SUB   -  Subtract
-///     0x20 -> OP_WRITE -  Write the top element of stack to stdout
-///     0x30 -> OP_JTRUE -  Jump to address if top of stack is true.
-///     0x40 -> OP_EQL   -  Determine if two top stack elements are boolean equal
+///     0x00 -> OP_EXIT   -  Terminate execution
+///     0x01 -> OP_PUSH   -  Push 4 bytes onto stack
+///     0x02 -> OP_POP    -  Pop x bytes from stack
+///     0x03 -> OP_STORE  -  Store: Store value at [sp] into DATA address given by [sp - 1]
+///     0x04 -> OP_LOAD   -  Load: Push value from DATA[stack[sp]] onto stack.
+///     0x10 -> OP_ADD    -  Add two values from stack
+///     0x11 -> OP_SUB    -  Subtract
+///     0x20 -> OP_WRITE  -  Write the top element of stack to stdout
+///     0x30 -> OP_JTRUE  -  Jump to address if top of stack is true.
+///     0x31 -> OP_JFALSE -  Jump to address if top of stack is false.
+///     0x32 -> OP_JMP    -  Jump to address.
+///     0x40 -> OP_EQL    -  Determine if two top stack elements are boolean equal
 ///
 ///
 use std::convert::TryInto;
@@ -54,7 +56,9 @@ impl RvmMachine {
                 0x12 => self.do_u32_binary(|a, b| a * b),
                 0x13 => self.do_u32_binary(|a, b| b / a),
                 0x20 => self.write_top(),
-                0x30 => self.j_true(),
+                0x30 => self.jmps(|v| v != 0, true),
+                0x31 => self.jmps(|v| v == 0, true),
+                0x32 => self.jmps(|v| true, false),
                 0x40 => self.do_bool_binary(|a, b| a == b),
                 0x41 => self.do_bool_binary(|a, b| a != b),
                 0x42 => self.do_bool_binary(|a, b| {a != 0 && b != 0}),
@@ -139,11 +143,17 @@ impl RvmMachine {
         self.stack.push(self.data[(address + 3) as usize]);
     }
 
-    fn j_true(&mut self) {
+    fn jmps<F>(&mut self, cond: F, check: bool) where
+    F: Fn(u32) -> bool {
         let addr = read_be_u32(&mut self.stack.pop(4));
-        let val = read_be_u32(&mut self.stack.pop(4));
-        if val != 0 {
-            // Subtract a "1" because after match, ip is incremented.
+        let val;
+        if check {
+            val = read_be_u32(&mut self.stack.pop(4));
+        } else {
+            val = 0
+        }
+        if cond(val) {
+            // Subtract a "1" because after outside match, ip is incremented.
             self.ip = addr as usize - 1;
         }
     }

@@ -133,11 +133,13 @@ impl Parser {
         while
         self.check_tok(TokenType::AVar).is_ok() ||
         self.check_tok(TokenType::Repeat).is_ok() ||
+        self.check_tok(TokenType::While).is_ok() ||
         self.check_tok(TokenType::Write).is_ok()
         {
             match tok.token_type {
                 TokenType::AVar => self.assign_st()?,
                 TokenType::Repeat => self.repeat_st()?,
+                TokenType::While => self.while_st()?,
                 TokenType::Write => self.write_st()?,
                 _ => panic!("???")
             }
@@ -177,15 +179,42 @@ impl Parser {
     fn repeat_st(&mut self) -> Result<(), String> {
         self.match_tok(TokenType::Repeat)?;
         let label = self.gen.i_ptr;
-        println!("Whats label? {}\n", label);
+
         self.stats()?;
         self.match_tok(TokenType::Until)?;
-        // self.condition()?;
-        self.expression()?;
+        self.expression()?; // Evaluate condition
 
         self.gen.op("OP_PUSH");
         self.gen.data(label.to_string(), "u32", 4);
         self.gen.op("OP_JTRUE");
+
+        Ok(())
+    }
+
+    fn while_st(&mut self) -> Result<(), String> {
+        self.match_tok(TokenType::While)?;
+        let label = self.gen.i_ptr;
+
+        self.expression()?; // Evaluate condition
+        self.match_tok(TokenType::Do)?;
+
+
+        self.gen.op("OP_PUSH");
+        let hole = self.gen.i_ptr;
+        self.gen.data("0".to_string(), "u32", 4);
+        self.gen.op("OP_JFALSE");
+
+        self.begin_st()?;
+
+        self.gen.op("OP_PUSH");
+        self.gen.data(label.to_string(), "u32", 4);
+        self.gen.op("OP_JMP");
+
+        let save = self.gen.i_ptr;
+        self.gen.i_ptr = hole;
+
+        self.gen.fill(save.to_string(), "u32", 4);
+        self.gen.i_ptr = save;
 
         Ok(())
     }

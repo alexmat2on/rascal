@@ -46,6 +46,8 @@ pub enum TokenType {
     AVar,
     Repeat,
     Until,
+    While,
+    Do,
 
     //** Operators
     OpPlus,
@@ -84,6 +86,8 @@ impl TokenType {
             TokenType::AVar => "TK_A_VAR",
             TokenType::Repeat => "TK_REPEAT",
             TokenType::Until => "TK_UNTIL",
+            TokenType::While => "TK_WHILE",
+            TokenType::Do => "TK_DO",
             TokenType::OpPlus => "TK_PLUS",
             TokenType::OpMinus => "TK_MINUS",
             TokenType::OpMult => "TK_MULT",
