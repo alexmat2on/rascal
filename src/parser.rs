@@ -12,8 +12,9 @@
 *       <decl-tail> -> NULL | ;<decls>
 *       <body> -> <begin-st>
 *       <begin-st> -> begin <stats> <end>
-*       <stats> -> NULL | <stats><stat-tail>
+*       <stats> -> NULL | <repeat st><stat-tail> | <while st> ... <if st> ... ...
 *       <stat-tail> -> ;<stats>
+*       <repeat st> ->
 *
 * The expression grammer specification (removing instances of immediate left recursion) is as follows:
 *       E  -> TE'

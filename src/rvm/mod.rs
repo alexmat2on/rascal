@@ -105,8 +105,6 @@ impl RvmMachine {
         let a = read_be_u32(&mut self.stack.pop(4));
         let b = read_be_u32(&mut self.stack.pop(4));
 
-        println!("res {:?}", binary_op(a, b));
-
         if binary_op(a, b) {
             self.stack.push(0);
             self.stack.push(0);
@@ -144,7 +142,7 @@ impl RvmMachine {
     fn j_true(&mut self) {
         let addr = read_be_u32(&mut self.stack.pop(4));
         let val = read_be_u32(&mut self.stack.pop(4));
-        if val == 0 {
+        if val != 0 {
             // Subtract a "1" because after match, ip is incremented.
             self.ip = addr as usize - 1;
         }

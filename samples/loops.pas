@@ -7,6 +7,6 @@ begin
     x := x - 1;
     y := y + 1;
     write(x);
-  until y = 14;
-
+  until x <> 4;
+  write(y);
 end.
