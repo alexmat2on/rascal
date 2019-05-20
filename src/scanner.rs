@@ -147,15 +147,22 @@ impl Scanner {
             let char = self.get_char();
             let char_g = tokens::get_char_group(char);
 
+            let next = self.get_char();
+            let next_g = tokens::get_char_group(next);
+
             match char_g {
                 CharGroup::DIGIT => value.push(char),
                 CharGroup::PUNCT => {
+                    if char == 46 && next_g != CharGroup::DIGIT {
+                        break;
+                    };
+
                     if char == 46 && ttype == TokenType::IntLit {
                         ttype = TokenType::RealLit;
                         value.push(char);
                     } else {
                         break;
-                    }
+                    };
                 },
                 _ => break,
             }
@@ -201,11 +208,14 @@ impl Scanner {
             "begin" => self.make_tok(TokenType::Begin, value_str, cnum),
             "end" => self.make_tok(TokenType::End, value_str, cnum),
             "var" => self.make_tok(TokenType::Var, value_str, cnum),
+            "integer" => self.make_tok(TokenType::Integer, value_str, cnum),
+            "array" => self.make_tok(TokenType::Array, value_str, cnum),
             "write" => self.make_tok(TokenType::Write, value_str, cnum),
             "repeat" => self.make_tok(TokenType::Repeat, value_str, cnum),
             "until" => self.make_tok(TokenType::Until, value_str, cnum),
             "while" => self.make_tok(TokenType::While, value_str, cnum),
             "do" => self.make_tok(TokenType::Do, value_str, cnum),
+            "of" => self.make_tok(TokenType::Of, value_str, cnum),
             "if" => self.make_tok(TokenType::If, value_str, cnum),
             "then" => self.make_tok(TokenType::Then, value_str, cnum),
             "else" => self.make_tok(TokenType::Else, value_str, cnum),
@@ -260,9 +270,13 @@ impl Scanner {
             "/" => self.make_tok(TokenType::OpDivi, value_str, cnum),
             "(" => self.make_tok(TokenType::LParen, value_str, cnum),
             ")" => self.make_tok(TokenType::RParen, value_str, cnum),
+            "[" => self.make_tok(TokenType::LBrack, value_str, cnum),
+            "]" => self.make_tok(TokenType::RBrack, value_str, cnum),
             ";" => self.make_tok(TokenType::Semi, value_str, cnum),
+            ":" => self.make_tok(TokenType::Colon, value_str, cnum),
             "," => self.make_tok(TokenType::Comma, value_str, cnum),
             "." => self.make_tok(TokenType::Dot, value_str, cnum),
+            ".." => self.make_tok(TokenType::Range, value_str, cnum),
             _ => {
                 let errmsg = scanner_error(
                     "Invalid operator or symbol".to_string(),

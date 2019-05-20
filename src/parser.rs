@@ -58,6 +58,8 @@ impl Parser {
         self.match_tok(TokenType::Dot)?;
         self.match_tok(TokenType::Eof)?;
         self.gen.op("OP_EXIT");
+
+        println!("The symbol table is: {:?}", self.scan.symbol_table);
         Ok(())
     }
 
@@ -87,6 +89,8 @@ impl Parser {
         {
             self.match_tok(TokenType::Var)?;
             self.namelist()?;
+            self.match_tok(TokenType::Colon)?;
+            self.decl_type()?;
             self.decl_tail()?;
         }
         Ok(())
@@ -95,16 +99,6 @@ impl Parser {
     fn namelist(&mut self) -> Result<(), String> {
         let cur_token = self.scan.cur_token.clone();
         self.match_tok(TokenType::Ident)?;
-
-        // set the cur_token to AVar in symbol table and give the DATA address
-        let mut update_tok = cur_token.clone();
-        update_tok.token_type = TokenType::AVar;
-        update_tok.token_addr = Some(self.gen.data_addr);
-        self.scan.symbol_table.set_entry(&cur_token, &update_tok);
-
-        // update the latest DATA adddress
-        self.gen.data_addr += 4;
-
         self.namelist_tail()?;
         Ok(())
     }
@@ -114,6 +108,52 @@ impl Parser {
             self.match_tok(TokenType::Comma)?;
             self.namelist()?;
         }
+        Ok(())
+    }
+
+    fn decl_type(&mut self) -> Result<(), String> {
+        while
+        self.check_tok(TokenType::Integer).is_ok() ||
+        self.check_tok(TokenType::Array).is_ok() {
+            match self.scan.cur_token.token_type {
+                TokenType::Integer => {
+                    self.match_tok(TokenType::Integer)?;
+
+                    let num_int_vars = self.scan.symbol_table.set_idents_to(TokenType::AVar, self.gen.data_addr, 4);
+
+                    self.gen.data_addr += num_int_vars * 4;
+                },
+                TokenType::Array => {
+                    self.match_tok(TokenType::Array)?;
+                    self.match_tok(TokenType::LBrack)?;
+
+                    let lo = self.scan.cur_token.token_value.parse::<u32>().expect("Lo should be int lit.");
+                    self.match_tok(TokenType::IntLit)?;
+
+                    self.match_tok(TokenType::Range)?;
+
+                    let hi = self.scan.cur_token.token_value.parse::<u32>().expect("Hi should be int lit.");
+                    self.match_tok(TokenType::IntLit)?;
+
+                    self.match_tok(TokenType::RBrack)?;
+                    self.match_tok(TokenType::Of)?;
+
+                    let size = (hi - lo + 1) * 4;
+                    let num_arr_vars = self.scan.symbol_table.set_idents_to_arr(
+                        TokenType::AnArrayVar,
+                        self.gen.data_addr,
+                        size,
+                        lo,
+                        hi
+                    );
+                    self.gen.data_addr += size;
+
+                    self.decl_type()?;
+                },
+                _ => panic!("??"),
+            }
+        }
+
         Ok(())
     }
 
@@ -134,6 +174,7 @@ impl Parser {
         let tok = self.scan.cur_token.clone();
         while
         self.check_tok(TokenType::AVar).is_ok() ||
+        self.check_tok(TokenType::AnArrayVar).is_ok() ||
         self.check_tok(TokenType::Repeat).is_ok() ||
         self.check_tok(TokenType::While).is_ok() ||
         self.check_tok(TokenType::If).is_ok() ||
@@ -141,6 +182,7 @@ impl Parser {
         {
             match tok.token_type {
                 TokenType::AVar => self.assign_st()?,
+                TokenType::AnArrayVar => self.assign_array_st()?,
                 TokenType::Repeat => self.repeat_st()?,
                 TokenType::While => self.while_st()?,
                 TokenType::If => self.if_st()?,
@@ -175,6 +217,38 @@ impl Parser {
         self.gen.data(addr_val.to_string(), "u32", 4);
 
         self.match_tok(TokenType::OpAssign)?;
+        self.expression()?;
+        self.gen.op("OP_STORE");
+        Ok(())
+    }
+
+    fn assign_array_st(&mut self) -> Result<(), String> {
+        let arr_token = self.scan.cur_token.clone();    // Copy this for later
+        self.match_tok(TokenType::AnArrayVar)?;
+        self.match_tok(TokenType::LBrack)?;
+        self.expression()?; // Parse the index value
+        self.match_tok(TokenType::RBrack)?;
+        self.match_tok(TokenType::OpAssign)?;
+
+        println!("Lets check symbtab: {:?}", self.scan.symbol_table);
+
+        // Convert the index value on the stack into an array element address!
+        let lo = arr_token.low.expect("Array should have low value!");
+        if lo != 0 {
+            self.gen.op("OP_PUSH");
+            self.gen.data(lo.to_string(), "u32", 4);
+            self.gen.op("OP_SUB");
+        }
+
+        self.gen.op("OP_PUSH");
+        self.gen.data("4".to_string(), "u32", 4);   // Push the size of array elements
+        self.gen.op("OP_MULT");
+
+        let addr = arr_token.token_addr.expect("Array should have an address by now!");
+        self.gen.op("OP_PUSH");
+        self.gen.data(addr.to_string(), "u32", 4); // Pushi the arrays base addr
+        self.gen.op("OP_ADD");
+
         self.expression()?;
         self.gen.op("OP_STORE");
         Ok(())
@@ -260,10 +334,6 @@ impl Parser {
         Ok(())
     }
 
-    fn if_stats(&mut self) -> Result<(), String> {
-        Ok(())
-    }
-
     fn write_st(&mut self) -> Result<(), String> {
         self.match_tok(TokenType::Write)?;
         self.match_tok(TokenType::LParen)?;
@@ -329,6 +399,32 @@ impl Parser {
                 self.gen.op("OP_LOAD");
 
                 self.match_tok(TokenType::AVar)?;
+            },
+            TokenType::AnArrayVar => {
+                let arr_token = self.scan.cur_token.clone();
+                self.match_tok(TokenType::AnArrayVar)?;
+                self.match_tok(TokenType::LBrack)?;
+                self.expression()?; // Parse the index value
+                self.match_tok(TokenType::RBrack)?;
+                
+                // Convert the index value on the stack into an array element address!
+                let lo = arr_token.low.expect("Array should have low value!");
+                if lo != 0 {
+                    self.gen.op("OP_PUSH");
+                    self.gen.data(lo.to_string(), "u32", 4);
+                    self.gen.op("OP_SUB");
+                }
+
+                self.gen.op("OP_PUSH");
+                self.gen.data("4".to_string(), "u32", 4);   // Push the size of array elements
+                self.gen.op("OP_MULT");
+
+                let addr = arr_token.token_addr.expect("Array should have an address by now!");
+                self.gen.op("OP_PUSH");
+                self.gen.data(addr.to_string(), "u32", 4); // Pushi the arrays base addr
+                self.gen.op("OP_ADD");
+
+                self.gen.op("OP_LOAD");
             },
             TokenType::OpMinus => {
                 self.match_tok(TokenType::OpMinus)?;

@@ -26,14 +26,15 @@ immediately execute the resulting bytecode at once.
   - [x] `repeat`
   - [x] `while`
 * [ ] Control structures:
-  - [ ] `if`
+  - [x] `if`
   - [ ] `switch`
-* [ ] Void procedures
 * [ ] Arrays
+* [ ] Void procedures
 * [ ] `goto` statements
 
 
 ## Current Constraints
 
 No real type system -- all values are currently constrained to
-unsigned 32-bit integers. Currently does not support floats, chars, or booleans (conditions are evaluated by comparing zero and non-zero values).
+unsigned 32-bit integers. Currently does not support floats, chars, or booleans
+(conditions are evaluated by comparing zero and non-zero values).

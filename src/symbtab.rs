@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use crate::tokens::Token;
+use crate::tokens::TokenType;
 
 #[derive(Debug)]
 pub struct SymbTab {
@@ -23,6 +24,50 @@ impl SymbTab {
 
     pub fn get(&mut self, tok: Token) -> Token {
         self.table.get(&tok.token_value).expect("Token not found").clone()
+    }
+
+    pub fn set_idents_to(&mut self, ttype: TokenType, starting_addr: u32, dsize: u32) -> u32 {
+        // Return number of idents this function has found.
+        let mut count = 0;
+        let mut addr = starting_addr;
+
+        for (name, token) in &mut self.table.clone() {
+            if token.token_type == TokenType::Ident {
+                count += 1;
+                let mut new = token.clone();
+                new.token_type = ttype;
+                new.token_addr = Some(addr);
+
+                self.set_entry(&token.clone(), &new);
+
+                addr += dsize;
+            }
+        }
+
+        count
+    }
+
+    pub fn set_idents_to_arr(&mut self, ttype: TokenType, starting_addr: u32, dsize: u32, lo: u32, hi: u32) -> u32 {
+        // Return number of idents this function has found.
+        let mut count = 0;
+        let mut addr = starting_addr;
+
+        for (name, token) in &mut self.table.clone() {
+            if token.token_type == TokenType::Ident {
+                count += 1;
+                let mut new = token.clone();
+                new.token_type = ttype;
+                new.token_addr = Some(addr);
+                new.low = Some(lo);
+                new.high = Some(hi);
+
+                self.set_entry(&token.clone(), &new);
+
+                addr += dsize;
+            }
+        }
+
+        count
     }
 
     pub fn set_entry(&mut self, tok: &Token, new: &Token) {

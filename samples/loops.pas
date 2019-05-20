@@ -1,4 +1,4 @@
-var x, y;
+var x, y : integer;
 
 begin
   x := 10;

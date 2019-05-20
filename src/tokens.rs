@@ -5,13 +5,26 @@ use std::fmt;
 pub struct Token {
     pub token_type: TokenType,
     pub token_value: String,
+    pub src_info: (usize, usize),
+
+    // For variables
     pub token_addr: Option<u32>,
-    pub src_info: (usize, usize)
+
+    // For array variables
+    pub low: Option<u32>,
+    pub high: Option<u32>
 }
 
 impl Token {
     pub fn new(token_type: TokenType, token_value: String, src_info: (usize, usize)) -> Token {
-        Token { token_type, token_value, token_addr: None, src_info }
+        Token {
+            token_type,
+            token_value,
+            src_info,
+            token_addr: None,
+            low: None,
+            high: None
+        }
     }
 
     pub fn to_op(&self) -> &str {
@@ -44,10 +57,14 @@ pub enum TokenType {
     End,
     Var,
     AVar,
+    AnArrayVar,
+    Integer,
+    Array,
     Repeat,
     Until,
     While,
     Do,
+    Of,
     If,
     Then,
     Else,
@@ -72,9 +89,13 @@ pub enum TokenType {
     Ident,
     LParen,
     RParen,
+    LBrack,
+    RBrack,
     Semi,
+    Colon,
     Comma,
     Dot,
+    Range,
     Write,
 }
 
@@ -87,10 +108,14 @@ impl TokenType {
             TokenType::End => "TK_END",
             TokenType::Var => "TK_VAR",
             TokenType::AVar => "TK_A_VAR",
+            TokenType::AnArrayVar => "TK_AN_ARRAY",
+            TokenType::Integer => "TK_INTEGER",
+            TokenType::Array => "TK_ARRAY",
             TokenType::Repeat => "TK_REPEAT",
             TokenType::Until => "TK_UNTIL",
             TokenType::While => "TK_WHILE",
             TokenType::Do => "TK_DO",
+            TokenType::Of => "TK_OF",
             TokenType::If => "TK_IF",
             TokenType::Then => "TK_THEN",
             TokenType::Else => "TK_ELSE",
@@ -108,8 +133,12 @@ impl TokenType {
             TokenType::Ident => "TK_IDENT",
             TokenType::LParen => "TK_LPAREN",
             TokenType::RParen => "TK_RPAREN",
+            TokenType::LBrack => "TK_LBRACKET",
+            TokenType::RBrack => "TK_RBRACKET",
             TokenType::Semi => "TK_SEMICOL",
+            TokenType::Colon => "TK_COLON",
             TokenType::Comma => "TK_COMMA",
+            TokenType::Range => "TK_RANGE",
             TokenType::Dot => "TK_DOT",
             TokenType::Write => "TK_WRITE",
         }
@@ -123,7 +152,7 @@ impl fmt::Display for TokenType {
 }
 
 /* Names for different categories of character values the scanner might encounter */
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum CharGroup {
     INVLD,
     WHITE,
@@ -274,9 +303,9 @@ pub fn get_char_group(value: u8) -> CharGroup {
         CharGroup::ALPHA,  // 120  x
         CharGroup::ALPHA,  // 121  y
         CharGroup::ALPHA,  // 122  z
-        CharGroup::PUNCT,  // 123  {
+        CharGroup::INVLD,  // 123  {
         CharGroup::INVLD,  // 124  |
-        CharGroup::PUNCT,  // 125  }
+        CharGroup::INVLD,  // 125  }
         CharGroup::INVLD,  // 126  ~
         CharGroup::INVLD,  // 127  DEL
     ];

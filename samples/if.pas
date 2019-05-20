@@ -1,4 +1,4 @@
-var x, y;
+var x, y : integer;
 
 begin
   x := 10;
@@ -11,9 +11,9 @@ begin
 
   if y = 3 then
   begin
-    write(y);
+    write(x);
   end
   else begin
-    write(x);
+    write(y);
   end;
 end.
