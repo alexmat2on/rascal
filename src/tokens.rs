@@ -40,6 +40,10 @@ impl Token {
             TokenType::OpNEqual => "OP_NEQUAL",
             TokenType::OpAnd => "OP_AND",
             TokenType::OpOr => "OP_OR",
+            TokenType::OpLessThan => "OP_LT",
+            TokenType::OpLessThanEql => "OP_LTE",
+            TokenType::OpGreatThan => "OP_GT",
+            TokenType::OpGreatThanEql => "OP_GTE",
             TokenType::Write => "OP_WRITE",
             _ => "NOP"
         }
@@ -79,6 +83,10 @@ pub enum TokenType {
     OpNEqual,
     OpAnd,
     OpOr,
+    OpLessThan,
+    OpLessThanEql,
+    OpGreatThan,
+    OpGreatThanEql,
 
     //** Constants
     IntLit,
@@ -128,6 +136,10 @@ impl TokenType {
             TokenType::OpNEqual => "TK_NOT_EQUAL",
             TokenType::OpAnd => "TK_AND",
             TokenType::OpOr => "TK_OR",
+            TokenType::OpLessThan => "TK_LT",
+            TokenType::OpLessThanEql => "TK_LTE",
+            TokenType::OpGreatThan => "TK_GT",
+            TokenType::OpGreatThanEql => "TK_GTE",
             TokenType::IntLit => "TK_INTLIT",
             TokenType::RealLit => "TK_REALLIT",
             TokenType::Ident => "TK_IDENT",

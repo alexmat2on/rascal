@@ -367,7 +367,11 @@ impl Parser {
         self.check_tok(TokenType::OpDivi).is_ok() ||
         self.check_tok(TokenType::OpAnd).is_ok() ||
         self.check_tok(TokenType::OpEqual).is_ok() ||
-        self.check_tok(TokenType::OpNEqual).is_ok()
+        self.check_tok(TokenType::OpNEqual).is_ok() ||
+        self.check_tok(TokenType::OpLessThan).is_ok() ||
+        self.check_tok(TokenType::OpLessThanEql).is_ok() ||
+        self.check_tok(TokenType::OpGreatThan).is_ok() ||
+        self.check_tok(TokenType::OpGreatThanEql).is_ok()
         {
             let tok = self.scan.cur_token.clone();
             self.match_tok(tok.token_type)?;
@@ -406,7 +410,7 @@ impl Parser {
                 self.match_tok(TokenType::LBrack)?;
                 self.expression()?; // Parse the index value
                 self.match_tok(TokenType::RBrack)?;
-                
+
                 // Convert the index value on the stack into an array element address!
                 let lo = arr_token.low.expect("Array should have low value!");
                 if lo != 0 {

@@ -13,7 +13,13 @@
 ///     0x31 -> OP_JFALSE -  Jump to address if top of stack is false.
 ///     0x32 -> OP_JMP    -  Jump to address.
 ///     0x40 -> OP_EQL    -  Determine if two top stack elements are boolean equal
-///
+///     0x41 -> OP_NEQL   -  Determine if two top stack elements are not boolean equals
+///     0x42 -> OP_AND    -  Evaluate boolean AND with top two stack
+///     0x43 -> OP_OR     -  Evaluate boolean OR with top two stack
+///     0x44 -> OP_LT     -  Determine if top stack element is less than bottom.
+///     0x45 -> OP_LTE    -  Determine if top stack element is less than or equal to bottom
+///     0x46 -> OP_GT     -  Determine if top stack element is greater than bottom.
+///     0x47 -> OP_GTE    -  Determine if top stack element is greater than or equal to bottom
 ///
 use std::convert::TryInto;
 
@@ -63,6 +69,11 @@ impl RvmMachine {
                 0x41 => self.do_bool_binary(|a, b| a != b),
                 0x42 => self.do_bool_binary(|a, b| {a != 0 && b != 0}),
                 0x43 => self.do_bool_binary(|a, b| {a != 0 || b != 0}),
+                // TO-DO: Are these comparison operations backwards?
+                0x44 => self.do_bool_binary(|a, b| {a > b}),
+                0x45 => self.do_bool_binary(|a, b| {a >= b}),
+                0x46 => self.do_bool_binary(|a, b| {a < b}),
+                0x47 => self.do_bool_binary(|a, b| {a <= b}),
                 _ => {
                     panic!("Illegal RVM instruction. Dump...\n\n");
                     println!("{:?}", self.code);

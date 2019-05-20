@@ -28,7 +28,7 @@ immediately execute the resulting bytecode at once.
 * [ ] Control structures:
   - [x] `if`
   - [ ] `switch`
-* [ ] Arrays
+* [x] Arrays
 * [ ] Void procedures
 * [ ] `goto` statements
 

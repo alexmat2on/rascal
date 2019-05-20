@@ -9,7 +9,7 @@ begin
     write(x);
   end;
 
-  if y = 3 then
+  if y < 3 then
   begin
     write(x);
   end
