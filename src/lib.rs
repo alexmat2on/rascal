@@ -33,11 +33,14 @@ impl Config {
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let scan = Scanner::new(&config.filename)?;
-    let mut parser = Parser::new(scan);
 
+    println!("Compiling program [{}]cargo...\n=================================================\n", &config.filename);
+
+    let mut parser = Parser::new(scan);
     parser.parse()?;
 
-    println!("The generated code is: {:02x?}", &parser.gen.code[..]);
+    println!("The generated code is: {:02x?}\n", &parser.gen.code[..]);
+    println!("Executing program [{}]cargo...\n=================================================\n", &config.filename);
 
     let mut rvm = RvmMachine::new(parser.gen.code);
     rvm.exec();

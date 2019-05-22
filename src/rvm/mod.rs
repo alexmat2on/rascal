@@ -68,7 +68,7 @@ impl RvmMachine {
                 0x20 => self.write_top(),
                 0x30 => self.jmps(|v| v != 0, true),
                 0x31 => self.jmps(|v| v == 0, true),
-                0x32 => self.jmps(|v| true, false),
+                0x32 => self.jmps(|_v| true, false),
                 0x40 => self.do_bool_binary(|a, b| a == b),
                 0x41 => self.do_bool_binary(|a, b| a != b),
                 0x42 => self.do_bool_binary(|a, b| {a != 0 && b != 0}),
@@ -80,8 +80,6 @@ impl RvmMachine {
                 0x47 => self.do_bool_binary(|a, b| {a <= b}),
                 _ => {
                     panic!("Illegal RVM instruction. Dump...\n\n");
-                    println!("{:?}", self.code);
-                    self.stack.print(false);
                 }
             }
 
@@ -94,17 +92,6 @@ impl RvmMachine {
     fn write_top(&mut self) {
         let a = read_be_u32(&mut self.stack.pop(4));
         println!("{}", a);
-    }
-
-    fn do_u32_unary<F>(&mut self, unary_op: F) where
-    F: Fn(u32) -> u32 {
-        let a = read_be_u32(&mut self.stack.pop(4));
-        let result = unary_op(a).to_be_bytes();
-
-        self.stack.push(result[0]);
-        self.stack.push(result[1]);
-        self.stack.push(result[2]);
-        self.stack.push(result[3]);
     }
 
     fn do_u32_binary<F>(&mut self, binary_op: F) where

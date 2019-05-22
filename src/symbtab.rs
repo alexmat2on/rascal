@@ -31,7 +31,7 @@ impl SymbTab {
         let mut count = 0;
         let mut addr = starting_addr;
 
-        for (name, token) in &mut self.table.clone() {
+        for token in &mut self.table.clone().values_mut() {
             if token.token_type == TokenType::Ident {
                 count += 1;
                 let mut new = token.clone();
@@ -52,7 +52,7 @@ impl SymbTab {
         let mut count = 0;
         let mut addr = starting_addr;
 
-        for (name, token) in &mut self.table.clone() {
+        for token in &mut self.table.clone().values_mut() {
             if token.token_type == TokenType::Ident {
                 count += 1;
                 let mut new = token.clone();

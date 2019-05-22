@@ -34,9 +34,10 @@ use crate::scanner::Scanner;
 use crate::codegen::CodeGenerator;
 use crate::codegen::rvm_gen::RvmGenerator;
 
-enum Type {
-    I, R, B, C
-}
+// Currently unused, may be used in the future to implement a proper type system.
+// enum Type {
+//     I, R, B, C
+// }
 
 pub struct Parser {
     scan : Scanner,
@@ -58,8 +59,6 @@ impl Parser {
         self.match_tok(TokenType::Dot)?;
         self.match_tok(TokenType::Eof)?;
         self.gen.op("OP_EXIT");
-
-        println!("The symbol table is: {:?}", self.scan.symbol_table);
         Ok(())
     }
 
@@ -98,37 +97,29 @@ impl Parser {
                 },
                 TokenType::Procedure => {
                     self.match_tok(TokenType::Procedure)?;
-
-                    let mut proc_tok = self.scan.cur_token.clone();
                     self.match_tok(TokenType::Ident)?;
                     self.match_tok(TokenType::Semi)?;
 
                     // Create a hole to JMP/skip the procedure body on first run.
-                    println!("Ok, iptr is: {}", self.gen.i_ptr);
                     self.gen.op("OP_PUSH");
                     let hole = self.gen.i_ptr;
-                    self.gen.data("55".to_string(), "u32", 4);
+                    self.gen.data("0".to_string(), "u32", 4);
                     self.gen.op("OP_JMP");
-
-                    println!("Ok, iptr is: {}", self.gen.i_ptr);
 
                     // Set the procedure's address to after the jump
                     self.scan.symbol_table.set_idents_to(TokenType::AProcedure, self.gen.i_ptr as u32, 4);
 
                     self.begin_st()?;
-
                     self.gen.op("OP_RETURN");
 
                     // Fill the hole with the instruction pointer after the return call
                     let save = self.gen.i_ptr;
-                    println!("Ok, iptr is: {}", self.gen.i_ptr);
                     self.gen.i_ptr = hole;
                     self.gen.fill(save.to_string(), "u32", 4);
 
                     // Restore i_ptr back to the latest instruction
                     self.gen.i_ptr = save;
 
-                    println!("hm THREE, {:?}\n\n", self.scan.cur_token);
                     self.decl_tail()?;
                 },
                 _ => panic!("Declarations must begin with PROCEDURE or VAR keywords."),
@@ -138,7 +129,6 @@ impl Parser {
     }
 
     fn namelist(&mut self) -> Result<(), String> {
-        let cur_token = self.scan.cur_token.clone();
         self.match_tok(TokenType::Ident)?;
         self.namelist_tail()?;
         Ok(())
@@ -180,7 +170,7 @@ impl Parser {
                     self.match_tok(TokenType::Of)?;
 
                     let size = (hi - lo + 1) * 4;
-                    let num_arr_vars = self.scan.symbol_table.set_idents_to_arr(
+                    self.scan.symbol_table.set_idents_to_arr(
                         TokenType::AnArrayVar,
                         self.gen.data_addr,
                         size,
