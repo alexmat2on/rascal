@@ -210,6 +210,7 @@ impl Scanner {
             "var" => self.make_tok(TokenType::Var, value_str, cnum),
             "integer" => self.make_tok(TokenType::Integer, value_str, cnum),
             "array" => self.make_tok(TokenType::Array, value_str, cnum),
+            "procedure" => self.make_tok(TokenType::Procedure, value_str, cnum),
             "write" => self.make_tok(TokenType::Write, value_str, cnum),
             "repeat" => self.make_tok(TokenType::Repeat, value_str, cnum),
             "until" => self.make_tok(TokenType::Until, value_str, cnum),

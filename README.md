@@ -29,7 +29,7 @@ immediately execute the resulting bytecode at once.
   - [x] `if`
   - [ ] `switch`
 * [x] Arrays
-* [ ] Void procedures
+* [x] Void procedures
 * [ ] `goto` statements
 
 
@@ -38,3 +38,7 @@ immediately execute the resulting bytecode at once.
 No real type system -- all values are currently constrained to
 unsigned 32-bit integers. Currently does not support floats, chars, or booleans
 (conditions are evaluated by comparing zero and non-zero values).
+
+Only void procedures with no parameters are supported. Procedures don't have
+local variables, they are all global/statically defined in the declarations
+section. 

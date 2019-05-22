@@ -6,6 +6,8 @@
 ///     0x02 -> OP_POP    -  Pop x bytes from stack
 ///     0x03 -> OP_STORE  -  Store: Store value at [sp] into DATA address given by [sp - 1]
 ///     0x04 -> OP_LOAD   -  Load: Push value from DATA[stack[sp]] onto stack.
+///     0x05 -> OP_CALL   -  Call a procedure and push the return address onto the stack.
+///     0x06 -> OP_RETURN -  Pop the address from the stack and set it to i_ptr.
 ///     0x10 -> OP_ADD    -  Add two values from stack
 ///     0x11 -> OP_SUB    -  Subtract
 ///     0x20 -> OP_WRITE  -  Write the top element of stack to stdout
@@ -57,6 +59,8 @@ impl RvmMachine {
                 0x02 => self.sp -= 1,
                 0x03 => self.store(),
                 0x04 => self.load(),
+                0x05 => self.do_call(),
+                0x06 => self.do_return(),
                 0x10 => self.do_u32_binary(|a, b| a + b),
                 0x11 => self.do_u32_binary(|a, b| b - a),
                 0x12 => self.do_u32_binary(|a, b| a * b),
@@ -152,6 +156,30 @@ impl RvmMachine {
         self.stack.push(self.data[(address + 1) as usize]);
         self.stack.push(self.data[(address + 2) as usize]);
         self.stack.push(self.data[(address + 3) as usize]);
+    }
+
+    fn do_call(&mut self) {
+        let newip = u32::from_be_bytes([
+            self.code[self.ip + 1],
+            self.code[self.ip + 2],
+            self.code[self.ip + 3],
+            self.code[self.ip + 4],
+        ]);
+
+        self.ip += 5;
+        let ip = self.ip.to_be_bytes();
+        self.stack.push(ip[4]);
+        self.stack.push(ip[5]);
+        self.stack.push(ip[6]);
+        self.stack.push(ip[7]);
+
+        self.ip = (newip - 1) as usize;
+    }
+
+    fn do_return(&mut self) {
+        // println!("Stack!?? {:?}\n", self.stack.stack);
+        let address = read_be_u32(&mut self.stack.pop(4));
+        self.ip = (address - 1) as usize;
     }
 
     fn jmps<F>(&mut self, cond: F, check: bool) where

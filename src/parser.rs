@@ -85,13 +85,54 @@ impl Parser {
     // === GRAMMAR PRODUCTIONS ====================================================================
     fn decls(&mut self) -> Result<(), String> {
         while
-        self.check_tok(TokenType::Var).is_ok()
+        self.check_tok(TokenType::Var).is_ok() ||
+        self.check_tok(TokenType::Procedure).is_ok()
         {
-            self.match_tok(TokenType::Var)?;
-            self.namelist()?;
-            self.match_tok(TokenType::Colon)?;
-            self.decl_type()?;
-            self.decl_tail()?;
+            match self.scan.cur_token.token_type {
+                TokenType::Var => {
+                    self.match_tok(TokenType::Var)?;
+                    self.namelist()?;
+                    self.match_tok(TokenType::Colon)?;
+                    self.decl_type()?;
+                    self.decl_tail()?;
+                },
+                TokenType::Procedure => {
+                    self.match_tok(TokenType::Procedure)?;
+
+                    let mut proc_tok = self.scan.cur_token.clone();
+                    self.match_tok(TokenType::Ident)?;
+                    self.match_tok(TokenType::Semi)?;
+
+                    // Create a hole to JMP/skip the procedure body on first run.
+                    println!("Ok, iptr is: {}", self.gen.i_ptr);
+                    self.gen.op("OP_PUSH");
+                    let hole = self.gen.i_ptr;
+                    self.gen.data("55".to_string(), "u32", 4);
+                    self.gen.op("OP_JMP");
+
+                    println!("Ok, iptr is: {}", self.gen.i_ptr);
+
+                    // Set the procedure's address to after the jump
+                    self.scan.symbol_table.set_idents_to(TokenType::AProcedure, self.gen.i_ptr as u32, 4);
+
+                    self.begin_st()?;
+
+                    self.gen.op("OP_RETURN");
+
+                    // Fill the hole with the instruction pointer after the return call
+                    let save = self.gen.i_ptr;
+                    println!("Ok, iptr is: {}", self.gen.i_ptr);
+                    self.gen.i_ptr = hole;
+                    self.gen.fill(save.to_string(), "u32", 4);
+
+                    // Restore i_ptr back to the latest instruction
+                    self.gen.i_ptr = save;
+
+                    println!("hm THREE, {:?}\n\n", self.scan.cur_token);
+                    self.decl_tail()?;
+                },
+                _ => panic!("Declarations must begin with PROCEDURE or VAR keywords."),
+            }
         }
         Ok(())
     }
@@ -175,6 +216,7 @@ impl Parser {
         while
         self.check_tok(TokenType::AVar).is_ok() ||
         self.check_tok(TokenType::AnArrayVar).is_ok() ||
+        self.check_tok(TokenType::AProcedure).is_ok() ||
         self.check_tok(TokenType::Repeat).is_ok() ||
         self.check_tok(TokenType::While).is_ok() ||
         self.check_tok(TokenType::If).is_ok() ||
@@ -183,6 +225,7 @@ impl Parser {
             match tok.token_type {
                 TokenType::AVar => self.assign_st()?,
                 TokenType::AnArrayVar => self.assign_array_st()?,
+                TokenType::AProcedure => self.procedure_st()?,
                 TokenType::Repeat => self.repeat_st()?,
                 TokenType::While => self.while_st()?,
                 TokenType::If => self.if_st()?,
@@ -224,13 +267,12 @@ impl Parser {
 
     fn assign_array_st(&mut self) -> Result<(), String> {
         let arr_token = self.scan.cur_token.clone();    // Copy this for later
+
         self.match_tok(TokenType::AnArrayVar)?;
         self.match_tok(TokenType::LBrack)?;
         self.expression()?; // Parse the index value
         self.match_tok(TokenType::RBrack)?;
         self.match_tok(TokenType::OpAssign)?;
-
-        println!("Lets check symbtab: {:?}", self.scan.symbol_table);
 
         // Convert the index value on the stack into an array element address!
         let lo = arr_token.low.expect("Array should have low value!");
@@ -251,6 +293,15 @@ impl Parser {
 
         self.expression()?;
         self.gen.op("OP_STORE");
+        Ok(())
+    }
+
+    fn procedure_st(&mut self) -> Result<(), String> {
+        let proc_tok = self.scan.cur_token.clone();    // Copy this for later
+        self.match_tok(TokenType::AProcedure)?;
+        self.gen.op("OP_CALL");
+        self.gen.data(proc_tok.token_addr.expect("Process should have address").to_string(), "u32", 4);
+
         Ok(())
     }
 
